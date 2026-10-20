@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Paperclip,
 } from 'lucide-react';
-import { activateLicense } from '../utils/license';
+import { activateLicense, openCheckoutPage } from '../utils/license';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -28,21 +28,28 @@ const UpgradeModal = ({
   onSuccess,
 }: UpgradeModalProps) => {
   const [licenseKeyInput, setLicenseKeyInput] = useState('');
+  const [isActivating, setIsActivating] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [showKeyField, setShowKeyField] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleActivate = () => {
-    const res = activateLicense(licenseKeyInput);
-    if (res.success) {
-      setStatusMsg({ text: res.message, type: 'success' });
-      setTimeout(() => {
-        if (onSuccess) onSuccess();
-        onClose();
-      }, 1200);
-    } else {
-      setStatusMsg({ text: res.message, type: 'error' });
+  const handleActivate = async () => {
+    setIsActivating(true);
+    setStatusMsg(null);
+    try {
+      const res = await activateLicense(licenseKeyInput);
+      if (res.success) {
+        setStatusMsg({ text: res.message, type: 'success' });
+        setTimeout(() => {
+          if (onSuccess) onSuccess();
+          onClose();
+        }, 1200);
+      } else {
+        setStatusMsg({ text: res.message, type: 'error' });
+      }
+    } finally {
+      setIsActivating(false);
     }
   };
 
@@ -206,9 +213,10 @@ const UpgradeModal = ({
               <button
                 type="button"
                 onClick={handleActivate}
-                className="px-5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer"
+                disabled={isActivating}
+                className="px-5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-1.5"
               >
-                Activate Pro
+                {isActivating ? 'Verifying...' : 'Activate Pro'}
               </button>
             </div>
             <p className="text-[10px] text-slate-400 text-center">
@@ -217,15 +225,14 @@ const UpgradeModal = ({
           </div>
         ) : (
           <div className="space-y-2.5">
-            <a
-              href="https://skuwikuwamtech.com/pricing.html"
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              onClick={() => openCheckoutPage()}
               className="w-full py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <span>Get rMoney Pro ($29 Lifetime)</span>
               <ExternalLink size={16} />
-            </a>
+            </button>
 
             <button
               type="button"

@@ -182,25 +182,31 @@ const SettingsPage = ({
 
   // License & Edition State
   const [licenseInput, setLicenseInput] = useState('');
+  const [isActivatingLicense, setIsActivatingLicense] = useState(false);
   const licenseInfo = getLicenseInfo();
 
-  const handleActivateLicense = () => {
+  const handleActivateLicense = async () => {
     if (!licenseInput.trim()) {
       showStatus('Please enter a license key.', 'error');
       return;
     }
-    const res = activateLicense(licenseInput.trim());
-    if (res.success) {
-      showStatus(res.message);
-      setLicenseInput('');
-    } else {
-      showStatus(res.message, 'error');
+    setIsActivatingLicense(true);
+    try {
+      const res = await activateLicense(licenseInput.trim());
+      if (res.success) {
+        showStatus(res.message);
+        setLicenseInput('');
+      } else {
+        showStatus(res.message, 'error');
+      }
+    } finally {
+      setIsActivatingLicense(false);
     }
   };
 
-  const handleDeactivateLicense = () => {
+  const handleDeactivateLicense = async () => {
     if (confirm('Are you sure you want to deactivate your rMoney Pro license on this device? (You can re-enter your key at any time).')) {
-      deactivateLicense();
+      await deactivateLicense();
       showStatus('rMoney Pro license deactivated. Switched to Free tier.');
     }
   };
@@ -1261,6 +1267,11 @@ WARNING: This will replace your current data with the contents of this backup fi
                   <CheckCircle2 size={18} className="text-emerald-400" />
                 </div>
                 <p className="text-xs text-slate-300">
+                  {licenseInfo.customerEmail ? (
+                    <span className="font-semibold text-emerald-400 mr-1.5">
+                      Licensed to: {licenseInfo.customerEmail} &bull;
+                    </span>
+                  ) : null}
                   100% Offline &bull; Zero recurring monthly fees &bull; Unlimited updates & devices
                 </p>
               </div>
@@ -1488,10 +1499,17 @@ WARNING: This will replace your current data with the contents of this backup fi
                 </div>
                 <button
                   onClick={handleActivateLicense}
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                  disabled={isActivatingLicense}
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold rounded-xl text-xs transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <Check size={14} />
-                  <span>Activate Key</span>
+                  {isActivatingLicense ? (
+                    <span>Verifying...</span>
+                  ) : (
+                    <>
+                      <Check size={14} />
+                      <span>Activate Key</span>
+                    </>
+                  )}
                 </button>
               </div>
               <p className="text-[11px] text-slate-400">
