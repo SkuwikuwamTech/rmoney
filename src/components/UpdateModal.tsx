@@ -33,6 +33,13 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
   if (!isOpen || !updateInfo) return null;
 
   const handleStartUpdate = async () => {
+    // If it's a direct release link from GitHub fallback, open download URL
+    if (!updateInfo.rawUpdate && updateInfo.downloadUrl) {
+      window.open(updateInfo.downloadUrl, '_blank');
+      onClose();
+      return;
+    }
+
     setIsInstalling(true);
     setErrorMsg(null);
 

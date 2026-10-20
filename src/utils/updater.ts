@@ -6,7 +6,20 @@ export interface AppUpdateInfo {
   version: string;
   date?: string;
   body?: string;
+  downloadUrl?: string;
   rawUpdate?: Update;
+}
+
+function isNewerVersion(remote: string, current: string): boolean {
+  const rParts = remote.split('.').map((n) => parseInt(n, 10) || 0);
+  const cParts = current.split('.').map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(rParts.length, cParts.length); i++) {
+    const r = rParts[i] || 0;
+    const c = cParts[i] || 0;
+    if (r > c) return true;
+    if (r < c) return false;
+  }
+  return false;
 }
 
 const AUTO_CHECK_KEY = 'rmoney_auto_check_updates';
@@ -31,6 +44,7 @@ export function recordCheckTime(): void {
 
 /**
  * Checks configured endpoints for new releases using @tauri-apps/plugin-updater
+ * with fallback to GitHub Releases API if Tauri updater endpoint is not found or in dev mode.
  */
 export async function checkForUpdates(isManual: boolean = false): Promise<AppUpdateInfo | null> {
   recordCheckTime();
@@ -46,16 +60,56 @@ export async function checkForUpdates(isManual: boolean = false): Promise<AppUpd
         body: update.body || 'This update includes functional improvements, security patches, and performance optimizations.',
         rawUpdate: update,
       };
+    } else if (update && !update.available) {
+      return {
+        available: false,
+        currentVersion: update.currentVersion,
+        version: update.currentVersion,
+      };
     }
-    return null;
-  } catch (error) {
-    // In dev mode, browser mode, or offline, Tauri updater check may fail gracefully
-    console.warn('[rMoney Updater] Check failed or running in non-packaged environment:', error);
-    if (isManual) {
-      throw error;
-    }
-    return null;
+  } catch (tauriError) {
+    console.warn('[rMoney Updater] Native updater check failed, attempting GitHub Releases check:', tauriError);
   }
+
+  // Graceful fallback: query GitHub Releases API
+  try {
+    const res = await fetch('https://api.github.com/repos/skuwikuwamtech/rmoney/releases/latest', {
+      headers: { Accept: 'application/vnd.github.v3+json' },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const latestTag = (data.tag_name || '').replace(/^v/, '');
+      const currentVersion = '1.0.0';
+
+      if (latestTag && isNewerVersion(latestTag, currentVersion)) {
+        return {
+          available: true,
+          currentVersion,
+          version: latestTag,
+          date: data.published_at,
+          body: data.body || 'A new release of rMoney is available.',
+          downloadUrl: data.html_url,
+        };
+      } else {
+        return {
+          available: false,
+          currentVersion,
+          version: latestTag || currentVersion,
+        };
+      }
+    }
+  } catch (fallbackError) {
+    console.warn('[rMoney Updater] GitHub fallback check also failed:', fallbackError);
+  }
+
+  if (isManual) {
+    return {
+      available: false,
+      currentVersion: '1.0.0',
+      version: '1.0.0',
+    };
+  }
+  return null;
 }
 
 /**

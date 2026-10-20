@@ -147,13 +147,13 @@ const SettingsPage = ({
       if (upd && upd.available) {
         setActiveUpdateInfo(upd);
       } else {
-        showStatus('You are running the latest version of rMoney (v0.1.0)!');
+        const curVer = upd?.currentVersion || '1.0.0';
+        showStatus(`You are running the latest version of rMoney (v${curVer})!`);
       }
     } catch (e: any) {
       setLastCheckedStr(new Date().toISOString());
       showStatus(
-        'Could not reach update server. You are running the latest installed version (v0.1.0).',
-        'error'
+        'Could not reach update server. You are running the latest installed version (v1.0.0).'
       );
     } finally {
       setIsCheckingUpdate(false);
