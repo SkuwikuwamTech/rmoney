@@ -1,0 +1,239 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+.font-brand {
+  font-family: 'Calibri', 'Candara', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Privacy Mode: Mask financial numbers with gentle blur */
+html.privacy-mode .tabular-nums,
+html.privacy-mode [data-private="true"] {
+  filter: blur(5px) !important;
+  user-select: none !important;
+  transition: filter 0.15s ease-in-out;
+}
+
+html.privacy-mode .tabular-nums:hover,
+html.privacy-mode [data-private="true"]:hover {
+  filter: blur(0px) !important;
+}
+
+/* Dark mode styling overrides for rMoney */
+html.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  background-color: #0b1120;
+  color: #f1f5f9;
+}
+
+.dark .bg-slate-100 {
+  background-color: #0b1120 !important;
+}
+
+.dark .bg-white {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .bg-slate-50 {
+  background-color: #1e293b !important;
+}
+
+.dark .bg-slate-50\/50,
+.dark .bg-slate-50\/80 {
+  background-color: #0f172a !important;
+}
+
+.dark .border-slate-200,
+.dark .border-slate-100,
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #334155 !important;
+}
+
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700 {
+  color: #f8fafc !important;
+}
+
+.dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+.dark .text-slate-500,
+.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark select {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+.dark input::placeholder {
+  color: #64748b !important;
+}
+
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-100:hover,
+.dark .hover\:bg-slate-100\/70:hover {
+  background-color: #334155 !important;
+}
+
+.dark .bg-slate-900 {
+  background-color: #090d16 !important;
+}
+
+.dark aside {
+  border-right: 1px solid #1e293b;
+}
+
+/* Modals & Dialogs */
+.dark .fixed.inset-0.bg-black\/50,
+.dark .fixed.inset-0.bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+}
+
+/* Recharts Tooltip dark mode */
+.dark .recharts-default-tooltip {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+/* Scrollbar dark mode */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ==========================================================================
+   Print Styles: 100% Grayscale Business Financial Statement
+   ========================================================================== */
+@media print {
+  @page {
+    margin: 15mm 15mm 15mm 15mm;
+    size: letter portrait;
+  }
+
+  /* Hide app chrome, sidebar, navigation, modals, interactive controls and web screen layouts */
+  aside,
+  nav,
+  button,
+  input,
+  select,
+  .no-print,
+  .modal-overlay,
+  .recharts-responsive-container,
+  .recharts-wrapper {
+    display: none !important;
+  }
+
+  /* Reset layout for full page business document */
+  html, body, #root, main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 9pt !important;
+    line-height: 1.35 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  }
+
+  /* Force pure grayscale - no colored text or gradient graphics */
+  * {
+    color: #000000 !important;
+    border-color: #000000 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Business Financial Table Formatting */
+  .biz-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 6pt !important;
+    margin-bottom: 14pt !important;
+  }
+
+  .biz-table th {
+    background-color: #f3f4f6 !important;
+    color: #000000 !important;
+    font-size: 7.5pt !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    border-top: 1.5pt solid #000000 !important;
+    border-bottom: 1.5pt solid #000000 !important;
+    border-left: none !important;
+    border-right: none !important;
+    padding: 4pt 6pt !important;
+    text-align: left !important;
+  }
+
+  .biz-table th.num,
+  .biz-table td.num {
+    text-align: right !important;
+  }
+
+  .biz-table td {
+    border-bottom: 0.5pt solid #e5e7eb !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    padding: 4pt 6pt !important;
+    font-size: 8pt !important;
+    vertical-align: top !important;
+  }
+
+  .biz-table tr:nth-child(even) td {
+    background-color: #fafafa !important;
+  }
+
+  .biz-table tfoot td {
+    border-top: 1.5pt solid #000000 !important;
+    border-bottom: 2.5pt double #000000 !important;
+    font-weight: 700 !important;
+    font-size: 8.5pt !important;
+    background-color: #f3f4f6 !important;
+  }
+
+  /* Monospace figures */
+  .tabular-nums,
+  .font-mono,
+  .num {
+    font-family: "Courier New", Courier, monospace !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  /* Page-break avoidance */
+  .biz-section,
+  .biz-table,
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}

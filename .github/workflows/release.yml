@@ -1,0 +1,76 @@
+name: Release rMoney
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'windows-latest'
+            args: ''
+          - platform: 'macos-latest'
+            args: '--target universal-apple-darwin'
+          - platform: 'ubuntu-22.04'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build and release Tauri application
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: v__VERSION__
+          releaseName: 'rMoney v__VERSION__'
+          releaseBody: |
+            ## rMoney v__VERSION__ Production Release
+            
+            Welcome to rMoney — the bank-grade, offline-first personal finance platform for privacy-conscious users.
+            
+            ### Included in this Release:
+            - **Transparent SQLite Database**: 100% offline and local file storage.
+            - **Device Synchronization**: Direct local Wi-Fi pairing and encrypted cloud folder sync.
+            - **Receipt & Document Attachments**: Attach invoices, PDFs, and receipts to transactions.
+            - **Advanced Cash Flow & Reports**: Interactive Monte Carlo cash-flow simulation, tax deduction tracking, and PDF statements.
+            - **Smart Auto-Categorization**: Regex and keyword transaction rules engine.
+            
+            ### Download Links:
+            - **Windows**: Download the `.exe` installer (or `.msi`) below.
+            - **macOS**: Universal `.dmg` (Apple Silicon & Intel).
+            - **Linux**: `.AppImage` or `.deb`.
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}

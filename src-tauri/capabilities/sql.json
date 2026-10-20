@@ -1,0 +1,10 @@
+{
+  "identifier": "sql-capability",
+  "windows": ["main"],
+  "permissions": [
+    "sql:allow-load",
+    "sql:allow-execute",
+    "sql:allow-select",
+    "sql:default"
+  ]
+}
