@@ -44,7 +44,20 @@ jobs:
           cache: 'npm'
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm install
+
+      - name: Prepare updater config
+        shell: bash
+        run: |
+          if [ -z "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" ]; then
+            echo "TAURI_SIGNING_PRIVATE_KEY not provided; building standard release installers."
+            node -e "
+              const fs = require('fs');
+              const conf = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
+              delete conf.plugins?.updater;
+              fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(conf, null, 2));
+            "
+          fi
 
       - name: Build and release Tauri application
         uses: tauri-apps/tauri-action@v0
