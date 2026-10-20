@@ -9,6 +9,8 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -69,9 +71,22 @@ jobs:
       - name: Build Android APK (Release)
         run: npx tauri android build --apk --target aarch64 --ci
 
-      - name: Upload Android APK
+      - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: rmoney-android-apk
           path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
           if-no-files-found: warn
+
+      - name: Prepare APK for Release
+        run: |
+          mkdir -p release-apk
+          find src-tauri/gen/android/app/build/outputs/apk -name "*.apk" -exec cp {} release-apk/rMoney-v1-universal.apk \;
+
+      - name: Attach APK to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-apk/rMoney-v1-universal.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
