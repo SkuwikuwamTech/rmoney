@@ -35,7 +35,12 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
   const handleStartUpdate = async () => {
     // If it's a direct release link from GitHub fallback, open download URL
     if (!updateInfo.rawUpdate && updateInfo.downloadUrl) {
-      window.open(updateInfo.downloadUrl, '_blank');
+      try {
+        const { openUrl } = await import('@tauri-apps/plugin-opener');
+        await openUrl(updateInfo.downloadUrl);
+      } catch {
+        window.open(updateInfo.downloadUrl, '_blank');
+      }
       onClose();
       return;
     }

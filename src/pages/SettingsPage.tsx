@@ -153,7 +153,7 @@ const SettingsPage = ({
     } catch (e: any) {
       setLastCheckedStr(new Date().toISOString());
       showStatus(
-        'Could not reach update server. You are running the latest installed version (v1.0.0).'
+        'Could not reach update server. Please check your internet connection.'
       );
     } finally {
       setIsCheckingUpdate(false);
