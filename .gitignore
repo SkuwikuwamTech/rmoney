@@ -11,11 +11,22 @@ node_modules
 dist
 dist-ssr
 *.local
-src-tauri/target
-.gemini
+
+# Tauri & Rust build artifacts
+target/
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Databases & local user files
 *.db
+*.db-journal
 *.sqlite
 *.sqlite3
+
+# Signing keys & secrets
+*.key
+*.pem
+*.pub
 
 # Editor directories and files
 .vscode/*
