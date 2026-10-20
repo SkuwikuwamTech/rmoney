@@ -1495,7 +1495,7 @@ WARNING: This will replace your current data with the contents of this backup fi
                 </button>
               </div>
               <p className="text-[11px] text-slate-400">
-                Developer testing keys: <code className="bg-white border border-slate-200 px-1.5 py-0.5 rounded font-mono text-slate-700 font-bold">RMONEY-PRO-EARLY-BIRD</code> or <code className="bg-white border border-slate-200 px-1.5 py-0.5 rounded font-mono text-slate-700 font-bold">RMONEY-PRO-TESTER</code>.
+                Enter your 24-character license key sent to your email upon purchase.
               </p>
             </div>
           </div>

@@ -212,19 +212,15 @@ const UpgradeModal = ({
               </button>
             </div>
             <p className="text-[10px] text-slate-400 text-center">
-              Testing Tip: Master test keys like <code className="font-bold text-slate-600">RMONEY-PRO-EARLY-BIRD</code> or any formatted key unlock Pro mode.
+              Enter your lifetime license key to unlock commercial Pro tools.
             </p>
           </div>
         ) : (
           <div className="space-y-2.5">
             <a
-              href="https://rmoney.app/buy"
+              href="https://skuwikuwamtech.com/pricing.html"
               target="_blank"
               rel="noreferrer"
-              onClick={(e) => {
-                e.preventDefault();
-                alert('In production, this opens your LemonSqueezy or Gumroad checkout page for $29 lifetime purchase!');
-              }}
               className="w-full py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <span>Get rMoney Pro ($29 Lifetime)</span>
