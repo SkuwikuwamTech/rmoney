@@ -24,6 +24,7 @@ import {
   Target,
   Shield,
   TrendingUp,
+  Menu,
 } from 'lucide-react';
 import { initDb, getDb } from './utils/db';
 import { checkAndTriggerAutoBackup } from './utils/backupManager';
@@ -49,6 +50,7 @@ import { initBackgroundCloudSyncWatcher } from './utils/syncEngine';
 
 const App = () => {
   const [activePage, setActivePage] = useState('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -510,9 +512,9 @@ const App = () => {
   }
 
   return (
-    <div className="flex h-screen bg-slate-100 text-slate-900 font-sans">
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col shadow-xl border-r border-slate-800/80">
+    <div className="flex h-screen bg-slate-100 text-slate-900 font-sans flex-col md:flex-row overflow-hidden">
+      {/* Desktop Sidebar (Hidden on mobile) */}
+      <aside className="hidden md:flex md:w-64 bg-slate-900 text-slate-300 flex-col shadow-xl border-r border-slate-800/80 shrink-0">
         <div className="relative overflow-hidden p-5 pb-6 border-b border-slate-800/80 mb-2 bg-gradient-to-b from-blue-950/40 via-indigo-950/20 to-transparent">
           {/* Ambient gradient glow behind the logo */}
           <div className="absolute -top-10 -left-10 w-44 h-44 bg-gradient-to-br from-blue-500/25 via-indigo-500/15 to-transparent rounded-full blur-2xl pointer-events-none" />
@@ -644,10 +646,226 @@ const App = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto p-8 flex flex-col">
-        {renderPage()}
-      </main>
+      {/* Main App Container */}
+      <div className="flex-1 flex flex-col overflow-hidden relative min-w-0">
+        {/* Mobile Top Header (Shown only on < md screens) */}
+        <header className="flex md:hidden items-center justify-between px-4 py-2.5 bg-slate-900 text-white border-b border-slate-800 shadow-sm shrink-0 z-30">
+          <div className="flex items-center gap-2.5">
+            <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-500 text-white shadow-md shadow-blue-500/20 ring-1 ring-white/20 shrink-0">
+              <span className="font-brand font-bold italic text-xl select-none leading-none pr-0.5 pb-0.5">r</span>
+              <span className="text-emerald-300 font-brand font-bold italic text-[9px] absolute -bottom-1 -right-1 bg-slate-900/90 rounded-full px-1 ring-1 ring-slate-800 leading-tight">$</span>
+            </div>
+            <div className="flex items-center gap-1.5 font-brand italic">
+              <span className="text-blue-400 font-bold text-2xl lowercase">r</span>
+              <span className="text-white font-bold text-xl tracking-tight ml-0.5">Money</span>
+              {proStatus ? (
+                <span className="ml-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded not-italic shadow-xs">
+                  PRO
+                </span>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Mobile Privacy Toggle */}
+            <button
+              onClick={() => togglePrivacyMode()}
+              className={`p-2 rounded-xl border transition-colors ${
+                privacyMode
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                  : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:text-white'
+              }`}
+              title="Toggle Privacy Mode"
+              aria-label="Toggle Privacy Mode"
+            >
+              {privacyMode ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+
+            {/* Quick Add Expense Button */}
+            <button
+              onClick={() => openTransactionModal('expense')}
+              className="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-xl font-bold text-xs shadow-md shadow-blue-600/30 transition-transform active:scale-95"
+              title="Add Expense"
+            >
+              <PlusCircle size={15} />
+              <span>Add</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-auto p-4 pb-20 sm:p-6 sm:pb-24 md:p-8 md:pb-8 flex flex-col min-w-0">
+          {renderPage()}
+        </main>
+
+        {/* Mobile Bottom Navigation Bar */}
+        <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/90 px-2 py-1.5 justify-around items-center safe-area-bottom shadow-2xl">
+          <button
+            onClick={() => { setActivePage('dashboard'); setIsMobileMenuOpen(false); }}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+              activePage === 'dashboard'
+                ? 'text-blue-400 font-bold scale-105'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <LayoutDashboard size={19} />
+            <span className="text-[10px] mt-0.5">Dashboard</span>
+          </button>
+
+          <button
+            onClick={() => { setActivePage('accounts'); setIsMobileMenuOpen(false); }}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+              activePage === 'accounts'
+                ? 'text-blue-400 font-bold scale-105'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Wallet size={19} />
+            <span className="text-[10px] mt-0.5">Accounts</span>
+          </button>
+
+          <button
+            onClick={() => { setActivePage('transactions'); setIsMobileMenuOpen(false); }}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+              activePage === 'transactions'
+                ? 'text-blue-400 font-bold scale-105'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Receipt size={19} />
+            <span className="text-[10px] mt-0.5">Transactions</span>
+          </button>
+
+          <button
+            onClick={() => { setActivePage('budget'); setIsMobileMenuOpen(false); }}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+              activePage === 'budget'
+                ? 'text-blue-400 font-bold scale-105'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Target size={19} />
+            <span className="text-[10px] mt-0.5">Budget</span>
+          </button>
+
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+              isMobileMenuOpen || ['bills', 'forecast', 'reports', 'settings'].includes(activePage)
+                ? 'text-blue-400 font-bold scale-105'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Menu size={19} />
+            <span className="text-[10px] mt-0.5">More</span>
+          </button>
+        </nav>
+
+        {/* Mobile More Drawer Sheet */}
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
+            <div
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            <div className="relative z-10 bg-slate-900 border-t border-slate-800 rounded-t-3xl p-5 shadow-2xl max-h-[85vh] overflow-y-auto space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-white text-base">More Features</span>
+                  <span className="text-xs text-slate-400">rMoney</span>
+                </div>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  onClick={() => { setActivePage('bills'); setIsMobileMenuOpen(false); }}
+                  className={`flex items-center gap-3 p-3 rounded-xl text-left font-semibold text-xs transition-colors ${
+                    activePage === 'bills'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <Calendar size={18} className="text-blue-400" />
+                  <span>Bills & Subs</span>
+                </button>
+
+                <button
+                  onClick={() => { setActivePage('forecast'); setIsMobileMenuOpen(false); }}
+                  className={`flex items-center gap-3 p-3 rounded-xl text-left font-semibold text-xs transition-colors ${
+                    activePage === 'forecast'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <BarChart3 size={18} className="text-emerald-400" />
+                  <span>Cash Forecast</span>
+                </button>
+
+                <button
+                  onClick={() => { setActivePage('reports'); setIsMobileMenuOpen(false); }}
+                  className={`flex items-center gap-3 p-3 rounded-xl text-left font-semibold text-xs transition-colors ${
+                    activePage === 'reports'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <ReportsIcon size={18} className="text-purple-400" />
+                  <span>Reports</span>
+                </button>
+
+                <button
+                  onClick={() => { setActivePage('settings'); setIsMobileMenuOpen(false); }}
+                  className={`flex items-center gap-3 p-3 rounded-xl text-left font-semibold text-xs transition-colors ${
+                    activePage === 'settings'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <Settings size={18} className="text-amber-400" />
+                  <span>Settings & Sync</span>
+                </button>
+              </div>
+
+              {/* Quick Security & Vault Options */}
+              {(pinHash || vaultActive) && (
+                <div className="pt-2 border-t border-slate-800/80 space-y-2">
+                  {pinHash && (
+                    <button
+                      onClick={() => { handleLockNow(); setIsMobileMenuOpen(false); }}
+                      className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-xs text-slate-300 font-semibold"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Lock size={16} className="text-amber-400" />
+                        <span>Lock App with PIN</span>
+                      </div>
+                      <ChevronRight size={14} className="text-slate-500" />
+                    </button>
+                  )}
+
+                  {vaultActive && (
+                    <button
+                      onClick={() => { handleLockVaultNow(); setIsMobileMenuOpen(false); }}
+                      className="w-full flex items-center justify-between p-3 rounded-xl bg-purple-950/40 hover:bg-purple-950/70 text-xs text-purple-200 font-semibold"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Shield size={16} className="text-purple-400" />
+                        <span>Lock Security Vault</span>
+                      </div>
+                      <ChevronRight size={14} className="text-slate-500" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Transaction Modal */}
       <TransactionModal

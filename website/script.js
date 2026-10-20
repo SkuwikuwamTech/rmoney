@@ -3,7 +3,9 @@ function detectOS() {
   const userAgent = window.navigator.userAgent.toLowerCase();
   const platform = window.navigator.platform?.toLowerCase() || '';
 
-  if (platform.includes('mac') || userAgent.includes('macintosh') || userAgent.includes('mac os')) {
+  if (userAgent.includes('android')) {
+    return 'android';
+  } else if (platform.includes('mac') || userAgent.includes('macintosh') || userAgent.includes('mac os')) {
     return 'mac';
   } else if (platform.includes('linux') || userAgent.includes('linux') || userAgent.includes('x11')) {
     return 'linux';
@@ -30,7 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const osDownloadButtons = document.querySelectorAll(`[data-os="${userOS}"]`);
 
   osBadges.forEach(badge => {
-    if (userOS === 'mac') {
+    if (userOS === 'android') {
+      badge.textContent = 'Android (.apk)';
+    } else if (userOS === 'mac') {
       badge.textContent = 'macOS (Universal)';
     } else if (userOS === 'linux') {
       badge.textContent = 'Linux (.AppImage / .deb)';
