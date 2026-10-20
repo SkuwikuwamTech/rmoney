@@ -7,7 +7,8 @@ const LICENSE_EMAIL_STORAGE = 'rmoney_license_email';
 const LICENSE_INSTANCE_STORAGE = 'rmoney_license_instance_id';
 
 // Default Lemon Squeezy hosted checkout link for rMoney Pro ($29 Lifetime)
-export const DEFAULT_CHECKOUT_URL = 'https://skuwikuwamtech.lemonsqueezy.com/buy/rmoney-pro';
+export const DEFAULT_CHECKOUT_URL =
+  'https://skuwikuwamtech.lemonsqueezy.com/checkout/buy/485af06a-9388-44c7-a506-fd1cd2c4f3e5';
 export const FALLBACK_CHECKOUT_URL = 'https://skuwikuwamtech.com/pricing.html';
 
 export interface LicenseInfo {
@@ -47,7 +48,11 @@ export async function openCheckoutPage(): Promise<void> {
     const { openUrl } = await import('@tauri-apps/plugin-opener');
     await openUrl(url);
   } catch {
-    window.open(url, '_blank');
+    if ((window as any).LemonSqueezy?.Url?.Open) {
+      (window as any).LemonSqueezy.Url.Open(url);
+    } else {
+      window.open(url, '_blank');
+    }
   }
 }
 
