@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skuwikuwam Technologies | Sovereign, Privacy-First Software</title>
+  <meta name="description" content="Skuwikuwam Technologies builds bank-grade, offline-first sovereign software tools you own forever. Creators of rMoney desktop finance.">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-[#090d16] text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Background Grid Glow -->
+  <div class="fixed inset-0 bg-grid pointer-events-none z-0"></div>
+  <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-indigo-600/20 via-purple-600/10 to-transparent blur-[120px] pointer-events-none z-0"></div>
+
+  <!-- Header / Navigation -->
+  <nav class="sticky top-0 z-50 glass-nav">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        <!-- Brand Logo -->
+        <a href="index.html" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 p-0.5 shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+            <div class="w-full h-full bg-[#090d16] rounded-[14px] flex items-center justify-center">
+              <i data-lucide="shield-check" class="w-5 h-5 text-indigo-400"></i>
+            </div>
+          </div>
+          <div>
+            <span class="text-lg font-black tracking-tight text-white block leading-tight">Skuwikuwam</span>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-400 block">Technologies</span>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <div class="hidden md:flex items-center gap-8">
+          <a href="index.html" class="text-sm font-semibold text-white transition-colors">Home</a>
+          <a href="rmoney.html" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors flex items-center gap-1.5">
+            <span>rMoney</span>
+            <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30 font-bold">App</span>
+          </a>
+          <a href="about.html" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">About & Values</a>
+          <a href="pricing.html" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Pricing & Download</a>
+        </div>
+
+        <!-- Action CTA -->
+        <div class="hidden md:flex items-center gap-4">
+          <a href="https://github.com/SkuwikuwamTech/rmoney" target="_blank" rel="noreferrer" class="p-2.5 text-slate-400 hover:text-white transition-colors" title="GitHub Repository">
+            <i data-lucide="github" class="w-5 h-5"></i>
+          </a>
+          <a href="pricing.html" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Get rMoney</span>
+          </a>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <div class="md:hidden flex items-center">
+          <button id="mobile-menu-btn" class="p-2 text-slate-400 hover:text-white">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown Menu -->
+    <div id="mobile-menu" class="hidden md:hidden border-b border-slate-800 bg-[#0f172a]/95 px-4 pt-3 pb-6 space-y-3">
+      <a href="index.html" class="block py-2 text-base font-semibold text-white">Home</a>
+      <a href="rmoney.html" class="block py-2 text-base font-semibold text-slate-300 hover:text-white">rMoney App</a>
+      <a href="about.html" class="block py-2 text-base font-semibold text-slate-300 hover:text-white">About Skuwikuwam</a>
+      <a href="pricing.html" class="block py-2 text-base font-semibold text-slate-300 hover:text-white">Pricing & Downloads</a>
+      <a href="pricing.html" class="w-full mt-2 py-3 rounded-xl bg-indigo-600 text-white font-bold text-center block">
+        Download rMoney v1.0.0
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <main class="relative z-10">
+    <section class="pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
+      <!-- Super Badge -->
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full badge-company mb-8 text-xs font-bold tracking-wide">
+        <i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i>
+        <span>SKUWIKUWAM TECHNOLOGIES • SOVEREIGN SOFTWARE ENGINEERING</span>
+      </div>
+
+      <!-- Main Headline -->
+      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight max-w-5xl mx-auto leading-tight sm:leading-none">
+        Software You Actually Own.<br>
+        <span class="text-gradient-primary">Zero Cloud Snooping.</span>
+      </h1>
+
+      <p class="mt-6 text-lg sm:text-xl text-slate-400 max-w-3xl mx-auto font-normal leading-relaxed">
+        We build bank-grade, offline-first personal applications designed for individuals who refuse to rent their software or surrender their private data to third-party cloud brokers.
+      </p>
+
+      <!-- Primary Action CTAs -->
+      <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="rmoney.html" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold text-base shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-3 group">
+          <span>Discover rMoney</span>
+          <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+        </a>
+        <a href="about.html" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 font-bold text-base transition-all flex items-center justify-center gap-2">
+          <i data-lucide="book-open" class="w-5 h-5 text-indigo-400"></i>
+          <span>Our Privacy Manifesto</span>
+        </a>
+      </div>
+
+      <!-- Live OS Quick Download Badge -->
+      <div class="mt-6 flex items-center justify-center gap-2 text-xs font-semibold text-slate-500">
+        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+        <span>Latest Release v1.0.0 ready for <span class="user-detected-os text-indigo-400 font-bold">your OS</span></span>
+      </div>
+    </section>
+
+    <!-- Flagship Product Feature Banner: rMoney -->
+    <section class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div class="glass-card rounded-3xl p-8 sm:p-12 border border-indigo-500/30 relative overflow-hidden glow-primary">
+        <!-- Ambient background glow inside card -->
+        <div class="absolute -right-20 -bottom-20 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          <div class="space-y-6">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+              <i data-lucide="award" class="w-4 h-4"></i>
+              <span>Flagship Application</span>
+            </div>
+
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Meet <span class="text-indigo-400">rMoney</span>: The Bank-Grade Desktop Finance Platform
+            </h2>
+
+            <p class="text-slate-300 text-base leading-relaxed">
+              Ditch the monthly subscription extortion and telemetry snooping of traditional personal finance apps. rMoney gives you total financial clarity with transparent SQLite local storage, Monte Carlo cash-flow simulation, and hybrid encrypted device sync.
+            </p>
+
+            <div class="grid grid-cols-2 gap-4 pt-2">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 flex-shrink-0">
+                  <i data-lucide="database" class="w-4 h-4"></i>
+                </div>
+                <span class="text-xs sm:text-sm font-semibold text-slate-200">100% Offline SQLite</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                  <i data-lucide="lock" class="w-4 h-4"></i>
+                </div>
+                <span class="text-xs sm:text-sm font-semibold text-slate-200">Zero Cloud Snooping</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0">
+                  <i data-lucide="sparkles" class="w-4 h-4"></i>
+                </div>
+                <span class="text-xs sm:text-sm font-semibold text-slate-200">What-If Simulation</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 flex-shrink-0">
+                  <i data-lucide="wallet" class="w-4 h-4"></i>
+                </div>
+                <span class="text-xs sm:text-sm font-semibold text-slate-200">$29 Lifetime License</span>
+              </div>
+            </div>
+
+            <div class="pt-4 flex items-center gap-4">
+              <a href="rmoney.html" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-md transition-all flex items-center gap-2">
+                <span>View Full Features</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </a>
+              <a href="pricing.html" class="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold border border-slate-700 transition-all">
+                Download Free Edition
+              </a>
+            </div>
+          </div>
+
+          <!-- Product Visual Preview Box -->
+          <div class="relative">
+            <div class="rounded-2xl border border-slate-700/80 bg-slate-900/90 shadow-2xl p-5 space-y-4">
+              <!-- Window Mockup Bar -->
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-rose-500/80"></div>
+                  <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
+                  <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+                  <span class="text-xs font-mono font-bold text-slate-400 ml-2">rMoney v1.0.0 (Production)</span>
+                </div>
+                <span class="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  Encrypted & Offline
+                </span>
+              </div>
+
+              <!-- Mockup Dashboard Metrics -->
+              <div class="grid grid-cols-3 gap-3">
+                <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60">
+                  <span class="text-[10px] uppercase font-bold text-slate-400 block">Total Net Worth</span>
+                  <span class="text-base sm:text-lg font-black text-white font-mono">$142,580.00</span>
+                </div>
+                <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60">
+                  <span class="text-[10px] uppercase font-bold text-slate-400 block">Monthly Budget</span>
+                  <span class="text-base sm:text-lg font-black text-emerald-400 font-mono">92% On Track</span>
+                </div>
+                <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60">
+                  <span class="text-[10px] uppercase font-bold text-slate-400 block">Cash Flow Forecast</span>
+                  <span class="text-base sm:text-lg font-black text-indigo-400 font-mono">+18.4% (Safe)</span>
+                </div>
+              </div>
+
+              <!-- Mockup Interactive Feature Row -->
+              <div class="bg-slate-800/40 rounded-xl p-3 border border-slate-700/40 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-semibold text-slate-300 flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    Automatic Rules Engine & Transaction Split
+                  </span>
+                  <span class="text-slate-400 font-mono">SQLite Local</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-semibold text-slate-300 flex items-center gap-2">
+                    <i data-lucide="paperclip" class="w-3.5 h-3.5 text-blue-400"></i>
+                    Receipt & Invoice Attachment Vault
+                  </span>
+                  <span class="text-slate-400 font-mono">Zero Cloud Leak</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-semibold text-slate-300 flex items-center gap-2">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-purple-400"></i>
+                    Direct Wi-Fi P2P Device Sync
+                  </span>
+                  <span class="text-slate-400 font-mono">AES-256</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The 4 Pillars of Skuwikuwam Technologies -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-3">Our Core Architecture</h2>
+        <p class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Engineered on Radical Principles of Digital Sovereignty
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Pillar 1 -->
+        <div class="glass-card p-6 rounded-3xl space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <i data-lucide="hard-drive" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">Local-First Always</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Your data is never transmitted to our servers or held hostage on an external cloud database. All state resides on your computer in open SQLite files.
+          </p>
+        </div>
+
+        <!-- Pillar 2 -->
+        <div class="glass-card p-6 rounded-3xl space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+            <i data-lucide="eye-off" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">Zero Telemetry</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            No behavioral trackers, no Google Analytics, and no marketing beacons. Skuwikuwam apps have zero interest in observing what you do.
+          </p>
+        </div>
+
+        <!-- Pillar 3 -->
+        <div class="glass-card p-6 rounded-3xl space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <i data-lucide="credit-card" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">Anti-Subscription</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            We reject the monthly recurring billing extortion. When you purchase software from Skuwikuwam, you own a lifetime perpetual license.
+          </p>
+        </div>
+
+        <!-- Pillar 4 -->
+        <div class="glass-card p-6 rounded-3xl space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+            <i data-lucide="cpu" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">Native Rust Performance</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Built on Rust and Tauri v2 for ultra-fast, memory-efficient performance with near-instant cold launch times and tiny binary footprints.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Call to Action Banner -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
+      <div class="glass-card rounded-3xl p-10 sm:p-16 border border-indigo-500/30 space-y-6 glow-primary">
+        <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight">
+          Take Back Control of Your Digital Financial Life
+        </h2>
+        <p class="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto font-normal">
+          Download rMoney Free today or unlock the $29 Lifetime Pro Edition for unlimited accounts and deep financial simulations.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+          <a href="pricing.html" class="px-8 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-base shadow-xl transition-all">
+            Download rMoney v1.0.0
+          </a>
+          <a href="about.html" class="px-8 py-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-base transition-all">
+            About Skuwikuwam Technologies
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 bg-[#060910] relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+              <i data-lucide="shield-check" class="w-4 h-4"></i>
+            </div>
+            <span class="font-bold text-white text-base">Skuwikuwam Technologies</span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Pioneering digital sovereignty with bank-grade, offline-first personal applications built to outlast cloud SaaS monopolies.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4">Products</h4>
+          <ul class="space-y-2 text-xs text-slate-400">
+            <li><a href="rmoney.html" class="hover:text-white transition-colors">rMoney Desktop Finance</a></li>
+            <li><a href="pricing.html" class="hover:text-white transition-colors">Free Edition</a></li>
+            <li><a href="pricing.html" class="hover:text-white transition-colors">Pro Edition ($29 Lifetime)</a></li>
+            <li><a href="https://github.com/SkuwikuwamTech/rmoney/releases" target="_blank" class="hover:text-white transition-colors">Release Notes (v1.0.0)</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4">Company</h4>
+          <ul class="space-y-2 text-xs text-slate-400">
+            <li><a href="about.html" class="hover:text-white transition-colors">About Skuwikuwam</a></li>
+            <li><a href="about.html#manifesto" class="hover:text-white transition-colors">Privacy Manifesto</a></li>
+            <li><a href="about.html#security" class="hover:text-white transition-colors">Security Architecture</a></li>
+            <li><a href="https://github.com/SkuwikuwamTech/rmoney" target="_blank" class="hover:text-white transition-colors">Open GitHub Repository</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4">Contact & Support</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Direct developer support with zero tier-1 bots:
+          </p>
+          <a href="mailto:support@skuwikuwam.com" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold block">
+            support@skuwikuwam.com
+          </a>
+        </div>
+      </div>
+
+      <div class="border-t border-slate-800/60 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+        <p>&copy; 2026 Skuwikuwam Technologies. All rights reserved. 100% Offline & Sovereign.</p>
+        <p class="font-mono">Built with Rust, Tauri & SQLite</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>
