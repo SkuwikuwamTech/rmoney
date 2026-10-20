@@ -47,6 +47,54 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.classList.add('ring-2', 'ring-indigo-400', 'ring-offset-2', 'ring-offset-slate-900');
   });
 
+  // Dynamic Release Assets & Latest Version Resolution
+  fetch('https://api.github.com/repos/SkuwikuwamTech/rmoney/releases/latest', {
+    headers: { Accept: 'application/vnd.github.v3+json' },
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error('Release fetch status: ' + res.status);
+      return res.json();
+    })
+    .then((data) => {
+      if (!data) return;
+      const tag = data.tag_name || 'v1.0.2';
+
+      // Update version badge
+      document.querySelectorAll('.latest-version-tag').forEach((el) => {
+        el.textContent = tag;
+      });
+
+      if (!Array.isArray(data.assets)) return;
+
+      const winExe = data.assets.find((a) => a.name.endsWith('.exe'));
+      const winMsi = data.assets.find((a) => a.name.endsWith('.msi'));
+      const macDmg = data.assets.find((a) => a.name.endsWith('.dmg'));
+      const linuxAppImage = data.assets.find((a) => a.name.endsWith('.AppImage'));
+      const linuxDeb = data.assets.find((a) => a.name.endsWith('.deb'));
+      const androidApk = data.assets.find((a) => a.name.endsWith('.apk'));
+
+      if (winExe) {
+        document.querySelectorAll('a[data-asset="win-exe"]').forEach((a) => (a.href = winExe.browser_download_url));
+      }
+      if (winMsi) {
+        document.querySelectorAll('a[data-asset="win-msi"]').forEach((a) => (a.href = winMsi.browser_download_url));
+      }
+      if (macDmg) {
+        document.querySelectorAll('a[data-asset="mac-dmg"]').forEach((a) => (a.href = macDmg.browser_download_url));
+      }
+      if (linuxAppImage) {
+        document.querySelectorAll('a[data-asset="linux-appimage"]').forEach((a) => (a.href = linuxAppImage.browser_download_url));
+      } else if (linuxDeb) {
+        document.querySelectorAll('a[data-asset="linux-appimage"]').forEach((a) => (a.href = linuxDeb.browser_download_url));
+      }
+      if (androidApk) {
+        document.querySelectorAll('a[data-asset="android-apk"]').forEach((a) => (a.href = androidApk.browser_download_url));
+      }
+    })
+    .catch((err) => {
+      console.debug('[rMoney] Dynamic GitHub release metadata lookup:', err);
+    });
+
   // FAQ Accordion
   const faqToggles = document.querySelectorAll('.faq-toggle');
   faqToggles.forEach(toggle => {
