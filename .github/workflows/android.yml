@@ -68,10 +68,10 @@ jobs:
           "
 
       - name: Initialize Tauri Android project
-        run: npm run tauri android init
+        run: npx tauri android init
 
       - name: Build Android APK (Release)
-        run: npm run tauri android build --apk --target aarch64 --ci
+        run: npx tauri android build --apk --target aarch64 --ci
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
