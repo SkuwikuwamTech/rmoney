@@ -1,0 +1,70 @@
+name: Build iOS Mobile App
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode_16.app || sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Install Rust stable & iOS targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install frontend dependencies
+        run: npm install
+
+      - name: Prepare Tauri Config for Mobile
+        shell: bash
+        run: |
+          node -e "
+            const fs = require('fs');
+            const conf = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
+            delete conf.plugins?.updater;
+            fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(conf, null, 2));
+          "
+
+      - name: Initialize Tauri iOS project
+        run: npx tauri ios init --ci
+
+      - name: Build iOS App (Simulator Target)
+        run: npx tauri ios build --target aarch64-sim --ci
+
+      - name: Upload iOS Simulator App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: rmoney-ios-simulator-app
+          path: src-tauri/gen/apple/build/**/*.app
+          if-no-files-found: warn
+
+      - name: Build iOS IPA (Device)
+        if: env.APPLE_API_KEY != ''
+        env:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ secrets.APPLE_API_KEY_PATH }}
+        run: npx tauri ios build --ci
+
+      - name: Upload iOS Device IPA
+        if: env.APPLE_API_KEY != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: rmoney-ios-device-ipa
+          path: src-tauri/gen/apple/build/**/*.ipa
+          if-no-files-found: warn
