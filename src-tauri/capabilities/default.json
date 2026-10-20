@@ -10,7 +10,6 @@
     "sql:allow-execute",
     "sql:allow-select",
     "sql:default",
-    "updater:default",
     "notification:default"
   ]
 }
