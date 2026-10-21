@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Release tag to attach APK to (e.g. v1.0.9)'
+        description: 'Release tag to attach APK to (e.g. v1.0.10)'
         required: false
-        default: 'v1.0.9'
+        default: 'v1.0.10'
 
 jobs:
   build-android:
@@ -75,6 +75,19 @@ jobs:
 
       - name: Initialize Tauri Android project
         run: npx tauri android init
+
+      - name: Apply rMoney App Icons to Android Native Project
+        shell: bash
+        run: |
+          echo "Updating Android launcher icons from app-icon.svg..."
+          npx tauri icon app-icon.svg
+          
+          echo "Copying icon mipmaps to Android native res directory..."
+          mkdir -p src-tauri/gen/android/app/src/main/res
+          cp -r src-tauri/icons/android/* src-tauri/gen/android/app/src/main/res/
+          
+          # Verify mipmap files exist
+          ls -la src-tauri/gen/android/app/src/main/res/mipmap-xxhdpi/
 
       - name: Build Android APK (Release)
         run: npx tauri android build --apk --target aarch64 --target x86_64 --ci
