@@ -31,7 +31,7 @@ jobs:
       - name: Install Rust stable & iOS targets
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-ios
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -64,9 +64,6 @@ jobs:
             fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(conf, null, 2));
           "
 
-      - name: Precompile Rust Static Library for iOS Device
-        run: cargo build --release --target aarch64-apple-ios --manifest-path src-tauri/Cargo.toml
-
       - name: Initialize Tauri iOS project
         run: npx tauri ios init --ci
 
@@ -77,84 +74,60 @@ jobs:
           find src-tauri/gen/apple -name "project.pbxproj" -exec sed -i '' 's/DevelopmentTeam = [^;]*;/DevelopmentTeam = "";/g' {} + || true
           find src-tauri/gen/apple -name "project.pbxproj" -exec sed -i '' 's/CODE_SIGN_IDENTITY = [^;]*;/CODE_SIGN_IDENTITY = "";/g' {} + || true
 
-      - name: Build iOS Physical Device App (Unsigned)
+      - name: Build iOS Physical Device App via Tauri CLI
         shell: bash
         run: |
-          PROJ_PATH=$(find src-tauri/gen/apple -name "*.xcodeproj" -maxdepth 1 | head -n 1)
-          echo "Xcode Project found at: $PROJ_PATH"
-          xcodebuild -project "$PROJ_PATH" -list
-
-          SCHEME=$(xcodebuild -project "$PROJ_PATH" -list | grep -E "rMoney_iOS|rmoney_iOS|_iOS" | head -n 1 | tr -d ' ')
-          if [ -z "$SCHEME" ]; then
-            SCHEME=$(xcodebuild -project "$PROJ_PATH" -list | grep -E "rMoney|rmoney" | head -n 1 | tr -d ' ')
-          fi
-          echo "Building Scheme: $SCHEME for physical iOS device (iphoneos SDK)"
-
-          mkdir -p src-tauri/gen/apple/build
-
-          # Attempt archive first
-          xcodebuild archive \
-            -project "$PROJ_PATH" \
-            -scheme "$SCHEME" \
-            -archivePath "src-tauri/gen/apple/build/rMoney.xcarchive" \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
+          echo "Building iOS physical device target (aarch64) with Tauri CLI..."
+          npx tauri ios build --target aarch64 --ci -- \
             CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="" || true
-
-          # If xcarchive wasn't produced, fallback to direct xcodebuild
-          if [ ! -d "src-tauri/gen/apple/build/rMoney.xcarchive" ]; then
-            echo "Falling back to xcodebuild build with iphoneos SDK..."
-            xcodebuild -project "$PROJ_PATH" \
-              -scheme "$SCHEME" \
-              -configuration Release \
-              -sdk iphoneos \
-              -destination 'generic/platform=iOS' \
-              -derivedDataPath "src-tauri/gen/apple/build" \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO \
-              DEVELOPMENT_TEAM="" \
-              build
-          fi
 
       - name: Package and Validate Unsigned IPA for Sideloadly / AltStore
         shell: bash
         run: |
           mkdir -p release-ipa/Payload
 
-          # Search for .app bundle strictly excluding any simulator artifacts
-          APP_BUNDLE=$(find src-tauri/gen/apple/build -name "*.app" -type d | grep -v -i "simulator" | head -n 1)
-
-          if [ -z "$APP_BUNDLE" ]; then
-            echo "::error::No iOS physical device .app bundle found!"
-            find src-tauri/gen/apple/build || true
-            exit 1
+          # 1. Check if Tauri already exported a physical device IPA
+          EXISTING_IPA=$(find src-tauri/gen/apple/build -name "*.ipa" -type f | grep -v -i "simulator" | head -n 1)
+          if [ -n "$EXISTING_IPA" ]; then
+            echo "Found Tauri exported device IPA at: $EXISTING_IPA"
+            cp "$EXISTING_IPA" release-ipa/rMoney-iOS-unsigned.ipa
           fi
 
-          echo "Found iOS physical device app at: $APP_BUNDLE"
+          # 2. If no pre-packaged IPA, package from the device .app bundle
+          if [ ! -f "release-ipa/rMoney-iOS-unsigned.ipa" ]; then
+            APP_BUNDLE=$(find src-tauri/gen/apple -name "*.app" -type d | grep -v -i "simulator" | head -n 1)
 
-          # Verify platform from Info.plist
-          if [ -f "$APP_BUNDLE/Info.plist" ]; then
-            PLATFORM=$(plutil -extract DTPlatformName raw "$APP_BUNDLE/Info.plist" 2>/dev/null || true)
-            echo "Detected DTPlatformName: $PLATFORM"
-            if [ "$PLATFORM" = "iphonesimulator" ]; then
-              echo "::error::CRITICAL: The built app is for iphonesimulator, NOT iphoneos!"
+            if [ -z "$APP_BUNDLE" ]; then
+              echo "::error::No iOS physical device .app bundle or .ipa found!"
+              find src-tauri/gen/apple || true
               exit 1
             fi
+
+            echo "Found iOS physical device app bundle at: $APP_BUNDLE"
+
+            # Verify platform from Info.plist
+            if [ -f "$APP_BUNDLE/Info.plist" ]; then
+              PLATFORM=$(plutil -extract DTPlatformName raw "$APP_BUNDLE/Info.plist" 2>/dev/null || true)
+              echo "Detected DTPlatformName: $PLATFORM"
+              if [ "$PLATFORM" = "iphonesimulator" ]; then
+                echo "::error::CRITICAL: Found iphonesimulator build instead of iphoneos!"
+                exit 1
+              fi
+            fi
+
+            # Copy into Payload and zip into IPA
+            cp -r "$APP_BUNDLE" release-ipa/Payload/
+            cd release-ipa
+            zip -r "rMoney-iOS-unsigned.ipa" Payload
+            cd ..
           fi
 
-          # Copy into Payload and zip into IPA
-          cp -r "$APP_BUNDLE" release-ipa/Payload/
-          cd release-ipa
-          zip -r "rMoney-iOS-unsigned.ipa" Payload
-          cd ..
-
-          echo "Successfully created IPA:"
+          echo "Final IPA ready for distribution:"
           ls -lh release-ipa/rMoney-iOS-unsigned.ipa
+          unzip -l release-ipa/rMoney-iOS-unsigned.ipa | head -n 25
 
       - name: Upload Unsigned iOS IPA Artifact
         uses: actions/upload-artifact@v4
