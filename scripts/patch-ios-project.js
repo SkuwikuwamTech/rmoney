@@ -15,26 +15,18 @@ function findPbx(dir) {
   return results;
 }
 
-const homeDir = process.env.HOME || process.env.USERPROFILE || '';
 const pbxFiles = findPbx('src-tauri/gen/apple');
-
 console.log(`Found ${pbxFiles.length} project.pbxproj files to patch.`);
 
 for (const file of pbxFiles) {
   let content = fs.readFileSync(file, 'utf8');
 
-  // 1. Inject Cargo and Node PATH into the Xcode Build Rust Code script
-  const envHeader = `#!/bin/sh\\nexport PATH="${homeDir}/.cargo/bin:/usr/local/bin:/opt/homebrew/bin:\\$PATH"\\nsource "${homeDir}/.cargo/env" 2>/dev/null || true\\n`;
-  content = content.replace(/(shellScript = ")(#!\/bin\/sh\\n)?/g, `$1${envHeader}`);
+  // 1. Disable user script sandboxing cleanly without touching shellScript structure
+  content = content.replaceAll('ENABLE_USER_SCRIPT_SANDBOXING = YES;', 'ENABLE_USER_SCRIPT_SANDBOXING = NO;');
 
-  // 2. Disable Xcode 15+ User Script Sandboxing so Cargo can access the toolchain
-  content = content.replace(/ENABLE_USER_SCRIPT_SANDBOXING = YES;/g, 'ENABLE_USER_SCRIPT_SANDBOXING = NO;');
-
-  // 3. Ensure Manual signing and clear team/identity requirements
-  content = content.replace(/CODE_SIGN_STYLE = Automatic;/g, 'CODE_SIGN_STYLE = Manual;');
-  content = content.replace(/DevelopmentTeam = [^;]*;/g, 'DevelopmentTeam = "";');
-  content = content.replace(/CODE_SIGN_IDENTITY = [^;]*;/g, 'CODE_SIGN_IDENTITY = "";');
+  // 2. Set code signing to manual
+  content = content.replaceAll('CODE_SIGN_STYLE = Automatic;', 'CODE_SIGN_STYLE = Manual;');
 
   fs.writeFileSync(file, content, 'utf8');
-  console.log('Successfully patched Xcode project:', file);
+  console.log('Cleanly updated build settings in:', file);
 }

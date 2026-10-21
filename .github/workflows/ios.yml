@@ -45,12 +45,14 @@ jobs:
       - name: Setup Environment Symlinks for Xcode Script Phases
         shell: bash
         run: |
-          sudo ln -sf $(which node) /usr/local/bin/node || true
-          sudo ln -sf $(which npm) /usr/local/bin/npm || true
-          sudo ln -sf $(which npx) /usr/local/bin/npx || true
-          sudo ln -sf $HOME/.cargo/bin/cargo /usr/local/bin/cargo || true
-          sudo ln -sf $HOME/.cargo/bin/rustc /usr/local/bin/rustc || true
-          sudo ln -sf $HOME/.cargo/bin/rustup /usr/local/bin/rustup || true
+          sudo mkdir -p /usr/local/bin /opt/homebrew/bin || true
+          for bin in node npm npx cargo rustc rustup; do
+            p=$(which $bin 2>/dev/null || echo "")
+            if [ -n "$p" ]; then
+              sudo ln -sf "$p" /usr/local/bin/$bin || true
+              sudo ln -sf "$p" /opt/homebrew/bin/$bin || true
+            fi
+          done
 
       - name: Build Web Frontend
         run: npm run build
@@ -65,17 +67,22 @@ jobs:
         run: npx tauri ios init --ci
 
       - name: Patch Xcode Project for Unsigned Build and Environment
-        run: node scripts/patch-ios-project.js
+        shell: bash
+        run: |
+          node scripts/patch-ios-project.js
+          plutil -lint src-tauri/gen/apple/*.xcodeproj/project.pbxproj
 
       - name: Build iOS Physical Device App via Tauri CLI
         shell: bash
         run: |
           echo "Building iOS physical device target (aarch64) with Tauri CLI..."
           npx tauri ios build --target aarch64 --ci --verbose -- \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="" \
-            DEVELOPMENT_TEAM="" || true
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            DEVELOPMENT_TEAM="" \
+            ENABLE_USER_SCRIPT_SANDBOXING=NO
 
       - name: Package and Validate Unsigned IPA for Sideloadly / AltStore
         shell: bash
