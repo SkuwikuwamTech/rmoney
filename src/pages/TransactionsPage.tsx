@@ -714,35 +714,35 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
           <p className="text-slate-500 text-xs sm:text-sm">All income, expenses, and transfers across your accounts</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={handleStartReconciliation}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition-colors font-semibold flex items-center gap-1.5 text-xs sm:text-sm shadow-sm"
-            title="Reconcile against your bank or card statement"
-          >
-            <Scale size={16} className="text-emerald-400" />
-            <span>Reconcile</span>
-          </button>
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => handleOpenAdd('expense')}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-semibold flex items-center gap-1.5 text-xs sm:text-sm shadow-sm"
+            className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-semibold flex items-center justify-center gap-1.5 text-xs sm:text-sm shadow-sm"
           >
             <Plus size={16} />
             <span>Expense</span>
           </button>
           <button
             onClick={() => handleOpenAdd('income')}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold flex items-center gap-1.5 text-xs sm:text-sm shadow-sm"
+            className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold flex items-center justify-center gap-1.5 text-xs sm:text-sm shadow-sm"
           >
             <Plus size={16} />
             <span>Income</span>
           </button>
           <button
             onClick={() => handleOpenAdd('transfer')}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors font-semibold flex items-center gap-1.5 text-xs sm:text-sm shadow-sm"
+            className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors font-semibold flex items-center justify-center gap-1.5 text-xs sm:text-sm shadow-sm"
           >
             <ArrowRightLeft size={16} />
             <span>Transfer</span>
+          </button>
+          <button
+            onClick={handleStartReconciliation}
+            className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition-colors font-semibold flex items-center justify-center gap-1.5 text-xs sm:text-sm shadow-sm"
+            title="Reconcile against your bank or card statement"
+          >
+            <Scale size={16} className="text-emerald-400" />
+            <span>Reconcile</span>
           </button>
         </div>
       </div>

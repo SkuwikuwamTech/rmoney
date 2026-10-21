@@ -706,7 +706,7 @@ const App = () => {
         </main>
 
         {/* Mobile Bottom Navigation Bar */}
-        <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/90 px-1 py-1 justify-around items-center pb-[max(0.4rem,env(safe-area-inset-bottom))] shadow-2xl">
+        <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/90 px-2 pt-1.5 justify-around items-center pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] shadow-2xl">
           <button
             onClick={() => { setActivePage('dashboard'); setIsMobileMenuOpen(false); }}
             className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
@@ -775,7 +775,7 @@ const App = () => {
               className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity"
               onClick={() => setIsMobileMenuOpen(false)}
             />
-            <div className="relative z-10 bg-slate-900 border-t border-slate-800 rounded-t-3xl p-5 shadow-2xl max-h-[85vh] overflow-y-auto space-y-4">
+            <div className="relative z-10 bg-slate-900 border-t border-slate-800 rounded-t-3xl px-5 pt-5 pb-[max(5rem,calc(env(safe-area-inset-bottom)+4.5rem))] shadow-2xl max-h-[85vh] overflow-y-auto space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-white text-base">More Features</span>
