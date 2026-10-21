@@ -56,14 +56,7 @@ jobs:
         run: npm run build
 
       - name: Prepare Tauri Config for Mobile
-        shell: bash
-        run: |
-          node -e "
-            const fs = require('fs');
-            const conf = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
-            delete conf.plugins?.updater;
-            fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(conf, null, 2));
-          "
+        run: node scripts/prepare-mobile-config.js
 
       - name: Precompile Rust Static Library for iOS Device
         run: cargo build --release --target aarch64-apple-ios --manifest-path src-tauri/Cargo.toml
@@ -72,46 +65,7 @@ jobs:
         run: npx tauri ios init --ci
 
       - name: Patch Xcode Project for Unsigned Build and Environment
-        shell: bash
-        run: |
-          node -e '
-            const fs = require("fs");
-            const path = require("path");
-            function findPbx(dir) {
-              let results = [];
-              for (const file of fs.readdirSync(dir)) {
-                const full = path.join(dir, file);
-                if (fs.statSync(full).isDirectory()) {
-                  results.push(...findPbx(full));
-                } else if (file === "project.pbxproj") {
-                  results.push(full);
-                }
-              }
-              return results;
-            }
-
-            const pbxFiles = findPbx("src-tauri/gen/apple");
-            for (const file of pbxFiles) {
-              let content = fs.readFileSync(file, "utf8");
-              
-              // 1. Inject Cargo and Node PATH into the Xcode Build Rust Code script
-              content = content.replace(
-                /(shellScript = ")(#!\/bin\/sh\\n)?/g,
-                "$1#!/bin/sh\\nexport PATH=\\"" + process.env.HOME + "/.cargo/bin:/usr/local/bin:/opt/homebrew/bin:\\$PATH\\"\\nsource \\"" + process.env.HOME + "/.cargo/env\\" 2>/dev/null || true\\n"
-              );
-
-              // 2. Disable Xcode 15+ User Script Sandboxing so Cargo can access the toolchain
-              content = content.replace(/ENABLE_USER_SCRIPT_SANDBOXING = YES;/g, "ENABLE_USER_SCRIPT_SANDBOXING = NO;");
-              
-              // 3. Ensure Manual signing and clear team/identity requirements
-              content = content.replace(/CODE_SIGN_STYLE = Automatic;/g, "CODE_SIGN_STYLE = Manual;");
-              content = content.replace(/DevelopmentTeam = [^;]*;/g, "DevelopmentTeam = \\"\\";");
-              content = content.replace(/CODE_SIGN_IDENTITY = [^;]*;/g, "CODE_SIGN_IDENTITY = \\"\\";");
-
-              fs.writeFileSync(file, content);
-              console.log("Successfully patched Xcode project:", file);
-            }
-          '
+        run: node scripts/patch-ios-project.js
 
       - name: Build iOS Physical Device App via Tauri CLI
         shell: bash
