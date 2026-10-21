@@ -107,16 +107,23 @@ jobs:
           $BUILD_TOOLS_DIR/zipalign -f -v -p 4 "$RAW_APK" "$ALIGNED_APK"
 
           # 3. Setup Keystore
+          KEYSTORE_FILE="scripts/release.keystore"
           if [ -n "${{ secrets.ANDROID_SIGNING_KEY }}" ]; then
             echo "Using repository signing key secret..."
-            echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 --decode > release.keystore
+            echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 --decode > "$KEYSTORE_FILE"
             KEYSTORE_PASS="${{ secrets.ANDROID_KEY_STORE_PASSWORD }}"
             KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}"
             KEY_PASS="${{ secrets.ANDROID_KEY_PASSWORD }}"
+          elif [ -f "$KEYSTORE_FILE" ]; then
+            echo "Using existing repository release keystore at: $KEYSTORE_FILE"
+            KEYSTORE_PASS="rmoneyapp"
+            KEY_ALIAS="rmoney"
+            KEY_PASS="rmoneyapp"
           else
-            echo "Generating self-signed release keystore for distribution..."
+            echo "Generating persistent release keystore for distribution..."
+            mkdir -p scripts
             keytool -genkeypair -v \
-              -keystore release.keystore \
+              -keystore "$KEYSTORE_FILE" \
               -alias rmoney \
               -keyalg RSA \
               -keysize 2048 \
@@ -127,11 +134,18 @@ jobs:
             KEYSTORE_PASS="rmoneyapp"
             KEY_ALIAS="rmoney"
             KEY_PASS="rmoneyapp"
+
+            # Commit the keystore back to the repo so all future builds share the identical signature
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add "$KEYSTORE_FILE"
+            git commit -m "chore: persist release signing keystore for continuous Android updates [skip ci]" || true
+            git push origin HEAD:main || true
           fi
 
           # 4. Sign the APK using apksigner with v1, v2, and v3 schemes
           $BUILD_TOOLS_DIR/apksigner sign \
-            --ks release.keystore \
+            --ks "$KEYSTORE_FILE" \
             --ks-pass pass:"$KEYSTORE_PASS" \
             --ks-key-alias "$KEY_ALIAS" \
             --key-pass pass:"$KEY_PASS" \
@@ -145,7 +159,7 @@ jobs:
           echo "Verifying signed APK with apksigner:"
           $BUILD_TOOLS_DIR/apksigner verify -v --print-certs "$FINAL_APK"
 
-          rm -f "$ALIGNED_APK" release.keystore
+          rm -f "$ALIGNED_APK"
           echo "Final Signed APK ready:"
           ls -lh "$FINAL_APK"
 
