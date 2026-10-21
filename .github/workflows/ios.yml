@@ -26,12 +26,14 @@ jobs:
           xcode-version: 'latest-stable'
 
       - name: Verify Xcode Version
-        run: xcodebuild -version
+        run: |
+          xcodebuild -version
+          sudo xcodebuild -runFirstLaunch || true
 
       - name: Install Rust stable & iOS targets
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-ios,aarch64-apple-ios-sim
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
