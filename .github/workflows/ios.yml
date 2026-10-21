@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Release tag to attach IPA to (e.g. v1.0.6)'
+        description: 'Release tag to attach IPA to (e.g. v1.0.7)'
         required: false
-        default: 'v1.0.6'
+        default: 'v1.0.7'
 
 jobs:
   build-ios:
@@ -33,7 +33,7 @@ jobs:
       - name: Install Rust stable & iOS targets
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+          targets: aarch64-apple-ios,x86_64-apple-ios
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -74,56 +74,72 @@ jobs:
           node scripts/patch-ios-project.js
           plutil -lint src-tauri/gen/apple/*.xcodeproj/project.pbxproj
 
-      - name: Build iOS Physical Device App via Tauri CLI
+      - name: Build iOS Physical Device App (Unsigned)
         shell: bash
         run: |
-          echo "Building iOS physical device target (aarch64) with Tauri CLI..."
-          npx tauri ios build --target aarch64 --ci --verbose
+          echo "Locating Xcode project..."
+          XCODEPROJ=$(find src-tauri/gen/apple -name "*.xcodeproj" | head -n 1)
+          echo "Found project: $XCODEPROJ"
 
-      - name: Package and Validate Unsigned IPA for Sideloadly / AltStore
+          # Determine scheme name
+          SCHEME=$(xcodebuild -project "$XCODEPROJ" -list | grep -E "_iOS|rMoney|rmoney" | head -n 1 | tr -d ' ')
+          echo "Using scheme: $SCHEME"
+
+          # Build physical device app directly to a local derivedDataPath
+          xcodebuild build \
+            -project "$XCODEPROJ" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/derivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            DEVELOPMENT_TEAM=""
+
+      - name: Package and Validate Unsigned IPA for Sideloading
         shell: bash
         run: |
           mkdir -p release-ipa/Payload
 
-          # 1. Check if Tauri already exported a physical device IPA
-          EXISTING_IPA=$(find src-tauri/gen/apple/build -name "*.ipa" -type f | grep -v -i "simulator" | head -n 1)
-          if [ -n "$EXISTING_IPA" ]; then
-            echo "Found Tauri exported device IPA at: $EXISTING_IPA"
-            cp "$EXISTING_IPA" release-ipa/rMoney-iOS-unsigned.ipa
+          # Find the built .app in the iphoneos products directory
+          APP_BUNDLE=$(find build/derivedData/Build/Products/Release-iphoneos -name "*.app" -type d | head -n 1)
+
+          if [ -z "$APP_BUNDLE" ]; then
+            echo "::error::No iOS physical device .app bundle found in Release-iphoneos!"
+            find build/derivedData -name "*.app" || true
+            exit 1
           fi
 
-          # 2. If no pre-packaged IPA, package from the device .app bundle
-          if [ ! -f "release-ipa/rMoney-iOS-unsigned.ipa" ]; then
-            APP_BUNDLE=$(find src-tauri/gen/apple -name "*.app" -type d | grep -v -i "simulator" | head -n 1)
+          echo "Found compiled physical device app bundle at: $APP_BUNDLE"
 
-            if [ -z "$APP_BUNDLE" ]; then
-              echo "::error::No iOS physical device .app bundle or .ipa found!"
-              find src-tauri/gen/apple || true
-              exit 1
-            fi
-
-            echo "Found iOS physical device app bundle at: $APP_BUNDLE"
-
-            # Verify platform from Info.plist
-            if [ -f "$APP_BUNDLE/Info.plist" ]; then
-              PLATFORM=$(plutil -extract DTPlatformName raw "$APP_BUNDLE/Info.plist" 2>/dev/null || true)
-              echo "Detected DTPlatformName: $PLATFORM"
-              if [ "$PLATFORM" = "iphonesimulator" ]; then
-                echo "::error::CRITICAL: Found iphonesimulator build instead of iphoneos!"
-                exit 1
-              fi
-            fi
-
-            # Copy into Payload and zip into IPA
-            cp -r "$APP_BUNDLE" release-ipa/Payload/
-            cd release-ipa
-            zip -r "rMoney-iOS-unsigned.ipa" Payload
-            cd ..
+          # Verify platform from Info.plist
+          PLATFORM=$(plutil -extract DTPlatformName raw "$APP_BUNDLE/Info.plist" 2>/dev/null || echo "unknown")
+          echo "Detected DTPlatformName: $PLATFORM"
+          if [ "$PLATFORM" != "iphoneos" ]; then
+            echo "::error::CRITICAL: Platform is '$PLATFORM', expected 'iphoneos'!"
+            exit 1
           fi
 
-          echo "Final IPA ready for distribution:"
+          # Verify Mach-O platform and architecture
+          BINARY=$(find "$APP_BUNDLE" -maxdepth 1 -type f -perm +111 | head -n 1)
+          if [ -n "$BINARY" ]; then
+            echo "Inspecting binary: $BINARY"
+            otool -hv "$BINARY" || true
+            otool -l "$BINARY" | grep -A 4 "LC_BUILD_VERSION" || true
+          fi
+
+          # Copy into Payload and package IPA
+          cp -r "$APP_BUNDLE" release-ipa/Payload/
+          cd release-ipa
+          zip -r rMoney-iOS-unsigned.ipa Payload
+          cd ..
+
+          echo "Final IPA packaged successfully:"
           ls -lh release-ipa/rMoney-iOS-unsigned.ipa
-          unzip -l release-ipa/rMoney-iOS-unsigned.ipa | head -n 25
+          unzip -l release-ipa/rMoney-iOS-unsigned.ipa | head -n 30
 
       - name: Upload Unsigned iOS IPA Artifact
         uses: actions/upload-artifact@v4
@@ -136,7 +152,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || inputs.tag_name || 'v1.0.6' }}
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || inputs.tag_name || 'v1.0.7' }}
           files: release-ipa/*.ipa
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
