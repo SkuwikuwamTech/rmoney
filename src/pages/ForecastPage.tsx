@@ -173,17 +173,28 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
 
       let startBalance = 0;
       if (selectedAccountId === 'all') {
-        startBalance = allAccounts.reduce((sum, acc) => sum + acc.balance, 0);
+        startBalance = allAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
       } else {
         const acc = allAccounts.find((a) => a.id === selectedAccountId);
         startBalance = acc?.balance || 0;
       }
 
-      const bills = (await db.select('SELECT * FROM scheduled_transactions')) as ScheduledTransaction[];
-      const overrides = (await db.select('SELECT * FROM scheduled_transaction_overrides')) as ScheduledTransactionOverride[];
+      let bills: ScheduledTransaction[] = [];
+      try {
+        bills = (await db.select('SELECT * FROM scheduled_transactions')) as ScheduledTransaction[];
+      } catch (err) {
+        console.warn('Error querying scheduled_transactions:', err);
+      }
+
+      let overrides: ScheduledTransactionOverride[] = [];
+      try {
+        overrides = (await db.select('SELECT * FROM scheduled_transaction_overrides')) as ScheduledTransactionOverride[];
+      } catch (err) {
+        console.warn('Error querying scheduled_transaction_overrides:', err);
+      }
 
       const overrideMap = new Map<string, ScheduledTransactionOverride>();
-      overrides.forEach((ov) => {
+      (overrides || []).forEach((ov) => {
         const key = ov.original_date ? `${ov.scheduled_id}_${ov.original_date}` : `${ov.scheduled_id}_${ov.date}`;
         overrideMap.set(key, ov);
       });
@@ -201,9 +212,12 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
 
       // Pre-calculate occurrences within horizon, taking rescheduled dates into account
       const occurrenceMap = new Map<string, ScheduledOccurrence[]>();
-      bills.forEach((pBill) => {
-        const bill = { ...pBill, amount: Math.abs(pBill.amount) };
-        let curDateStr = bill.next_date;
+      (bills || []).forEach((pBill) => {
+        if (!pBill || !pBill.next_date) return;
+        const bill = { ...pBill, amount: Math.abs(pBill.amount || 0) };
+        let curDateStr = String(bill.next_date).trim();
+        if (!curDateStr || curDateStr.length < 10) return;
+
         if (bill.frequency === 'once') {
           const ov = overrideMap.get(`${bill.id}_${curDateStr}`);
           const effectiveDate = ov?.new_date && ov.new_date.trim() ? ov.new_date.trim() : curDateStr;
@@ -229,7 +243,9 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
             });
           }
         } else {
-          while (curDateStr <= endDateStr) {
+          let safety = 0;
+          while (curDateStr <= endDateStr && safety < 1000) {
+            safety++;
             const ov = overrideMap.get(`${bill.id}_${curDateStr}`);
             const effectiveDate = ov?.new_date && ov.new_date.trim() ? ov.new_date.trim() : curDateStr;
             const effectiveAmount = ov?.amount !== undefined && ov?.amount !== null ? Math.abs(ov.amount) : bill.amount;
@@ -253,7 +269,9 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
                 isDateChanged,
               });
             }
-            curDateStr = advanceDateStr(curDateStr, bill.frequency);
+            const nextD = advanceDateStr(curDateStr, bill.frequency || 'monthly');
+            if (!nextD || nextD === curDateStr || nextD.includes('NaN')) break;
+            curDateStr = nextD;
           }
         }
       });
@@ -587,7 +605,7 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
     highPoint && lowPoint && (highPoint.date !== lowPoint.date || highPoint.balance !== lowPoint.balance);
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col space-y-8">
+    <div className="w-full space-y-6 sm:space-y-8 pb-6">
       {/* Top View Selector: Cash Flow Runway vs. Debt Payoff */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-4">
         <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 border border-slate-300/60 shadow-2xs">
@@ -823,21 +841,21 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
       </div>
 
       {/* Main Charts & Ledger Section */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Forecast Chart */}
-        <div className="xl:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col min-h-0">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2">
+        <div className="xl:col-span-2 bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-slate-800 flex items-center gap-2">
               <BarChart3 size={20} className="text-blue-500" />
               Cash Flow Projection
             </h2>
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500">
+              <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-blue-500 rounded-full"></div>
               <span>Simulated Balance</span>
             </div>
           </div>
 
-          <div className="flex-1 w-full min-h-0">
+          <div className="h-64 sm:h-80 w-full pt-2">
             {loading ? (
               <div className="h-full w-full flex items-center justify-center text-slate-400 italic">
                 Calculating future cash flow...
@@ -1023,10 +1041,10 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
         </div>
 
         {/* Future Transactions Ledger */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col min-h-0">
-          <div className="p-6 border-b border-slate-100">
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+          <div className="p-4 sm:p-6 border-b border-slate-100">
             <div className="flex justify-between items-center mb-1">
-              <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-800 flex items-center gap-2">
                 <List size={20} className="text-blue-500" />
                 Upcoming Occurrences
               </h2>
@@ -1036,7 +1054,7 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
             </p>
           </div>
 
-          <div className="flex-1 overflow-auto">
+          <div className="max-h-96 overflow-y-auto">
             {loading ? (
               <div className="p-8 text-center text-slate-400 italic">Loading ledger...</div>
             ) : futureTxs.length === 0 ? (

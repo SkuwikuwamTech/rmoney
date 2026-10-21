@@ -706,12 +706,12 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
   );
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col space-y-8">
+    <div className="w-full space-y-6 pb-6">
       {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">Transaction History</h1>
-          <p className="text-slate-500">All income, expenses, and transfers across your accounts</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Transaction History</h1>
+          <p className="text-slate-500 text-xs sm:text-sm">All income, expenses, and transfers across your accounts</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -748,64 +748,66 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
       </div>
 
       {/* Filter Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5 sm:space-y-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-3">
         <div className="relative sm:col-span-2 lg:col-span-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
             type="text"
             placeholder="Search payee or note..."
-            className="pl-10 pr-4 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 w-full text-sm"
+            className="pl-9 pr-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 w-full text-xs sm:text-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <Filter size={16} className="text-slate-400" />
-          <select
-            className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium bg-white"
-            value={selectedAccountId}
-            onChange={(e) =>
-              setSelectedAccountId(e.target.value === 'all' ? 'all' : parseInt(e.target.value))
-            }
-          >
-            <option value="all">All Accounts ({accounts.length})</option>
-            {accounts.map((acc) => (
-              <option key={acc.id} value={acc.id}>
-                {acc.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <div className="grid grid-cols-2 sm:contents gap-2">
+          <div className="flex items-center gap-1.5">
+            <Filter size={14} className="text-slate-400 shrink-0 hidden sm:block" />
+            <select
+              className="w-full px-2.5 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm font-medium bg-white"
+              value={selectedAccountId}
+              onChange={(e) =>
+                setSelectedAccountId(e.target.value === 'all' ? 'all' : parseInt(e.target.value))
+              }
+            >
+              <option value="all">All Accounts ({accounts.length})</option>
+              {accounts.map((acc) => (
+                <option key={acc.id} value={acc.id}>
+                  {acc.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <select
-            className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium bg-white"
-            value={selectedCategoryId}
-            onChange={(e) =>
-              setSelectedCategoryId(e.target.value === 'all' ? 'all' : parseInt(e.target.value))
-            }
-          >
-            <option value="all">All Categories ({categories.length})</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name} ({cat.type})
-              </option>
-            ))}
-          </select>
-        </div>
+          <div>
+            <select
+              className="w-full px-2.5 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm font-medium bg-white"
+              value={selectedCategoryId}
+              onChange={(e) =>
+                setSelectedCategoryId(e.target.value === 'all' ? 'all' : parseInt(e.target.value))
+              }
+            >
+              <option value="all">All Categories ({categories.length})</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name} ({cat.type})
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <select
-            className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium bg-white"
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value as any)}
-          >
-            <option value="all">All Statuses (C / R / Uncleared)</option>
-            <option value="uncleared">Uncleared only</option>
-            <option value="cleared">Cleared (C)</option>
-            <option value="reconciled">Reconciled (R)</option>
-          </select>
+          <div className="col-span-2 sm:col-span-1">
+            <select
+              className="w-full px-2.5 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm font-medium bg-white"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value as any)}
+            >
+              <option value="all">All Statuses (C / R / Uncleared)</option>
+              <option value="uncleared">Uncleared only</option>
+              <option value="cleared">Cleared (C)</option>
+              <option value="reconciled">Reconciled (R)</option>
+            </select>
+          </div>
         </div>
       </div>
 

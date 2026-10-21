@@ -478,7 +478,7 @@ const BillsPage = () => {
   const calendarNet = calendarIncome - calendarExpense;
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col space-y-8">
+    <div className="w-full space-y-6 sm:space-y-8 pb-6">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Scheduled Transactions</h1>
@@ -1183,7 +1183,7 @@ const BillsPage = () => {
         </div>
       ) : (
         /* Bills List: Desktop Table + Mobile Cards Feed */
-        <div className="flex-1 min-h-0 flex flex-col gap-4">
+        <div className="w-full space-y-4">
           {/* Mobile Scheduled Transactions Feed (Phones / Small Tablets) */}
           <div className="md:hidden flex flex-col gap-3">
             {loading ? (

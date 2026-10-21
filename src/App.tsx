@@ -701,7 +701,7 @@ const App = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 pb-24 sm:p-6 sm:pb-24 md:p-8 md:pb-8 flex flex-col min-w-0">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 pb-32 sm:p-6 sm:pb-28 md:p-8 md:pb-8 min-w-0">
           {renderPage()}
         </main>
 
@@ -1132,11 +1132,11 @@ const Dashboard = ({
   const accountsToDisplay = favoriteAccounts.length > 0 ? favoriteAccounts : accounts;
 
   return (
-    <div className="flex-1 w-full min-h-0 flex flex-col space-y-6">
+    <div className="w-full space-y-6 pb-6">
       <div className="space-y-4">
         <header>
-          <h1 className="text-3xl font-bold text-slate-800">My Money</h1>
-          <p className="text-slate-500">Welcome to your personal financial overview</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">My Money</h1>
+          <p className="text-slate-500 text-xs sm:text-sm">Welcome to your personal financial overview</p>
         </header>
 
         {/* Getting Started Checklist */}
@@ -1153,30 +1153,30 @@ const Dashboard = ({
       {/* Key Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <StatCard
-          label="Total Net Worth"
+          label="Net Worth"
           value={formatCurrency(totalBalance)}
-          icon={<Wallet className="text-blue-500" size={22} />}
+          icon={<Wallet className="text-blue-500" size={20} />}
         />
         <StatCard
-          label="Upcoming Bills (30d)"
+          label="Upcoming Bills"
           value={loadingStats ? '...' : formatCurrency(stats.upcomingBills)}
-          icon={<Calendar className="text-orange-500" size={22} />}
+          icon={<Calendar className="text-orange-500" size={20} />}
         />
         <StatCard
-          label="This Month's Spending"
+          label="Spending (Mo)"
           value={loadingStats ? '...' : formatCurrency(stats.monthlySpending)}
-          icon={<ArrowDownCircle className="text-red-500" size={22} />}
+          icon={<ArrowDownCircle className="text-red-500" size={20} />}
         />
         <StatCard
-          label="This Month's Income"
+          label="Income (Mo)"
           value={loadingStats ? '...' : formatCurrency(stats.monthlyIncome)}
-          icon={<ArrowUpCircle className="text-green-500" size={22} />}
+          icon={<ArrowUpCircle className="text-green-500" size={20} />}
         />
       </div>
 
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Favorite Accounts */}
-        <section className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 flex flex-col min-h-0">
+        <section className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <h2 className="text-base sm:text-xl font-bold text-slate-800 flex items-center gap-2">
               <Star size={18} className="text-amber-400 fill-amber-400" />
@@ -1190,7 +1190,7 @@ const Dashboard = ({
             </button>
           </div>
 
-          <div className="flex-1 min-h-0 space-y-2 sm:space-y-2.5 overflow-y-auto">
+          <div className="space-y-2 sm:space-y-2.5">
             {accountsToDisplay.length === 0 ? (
               <p className="text-slate-400 text-xs sm:text-sm italic py-4 text-center">
                 No accounts created yet. Head over to Accounts to add one.
@@ -1407,12 +1407,12 @@ const StatCard = ({
   value: string;
   icon: React.ReactNode;
 }) => (
-  <div className="bg-white p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 flex items-center gap-2.5 sm:gap-4 min-w-0">
-    <div className="p-2 sm:p-3 bg-slate-50 rounded-xl sm:rounded-2xl shrink-0 [&>svg]:size-4.5 sm:[&>svg]:size-5.5">{icon}</div>
-    <div className="flex-1 min-w-0">
-      <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider truncate">{label}</p>
-      <p className="text-base sm:text-xl lg:text-2xl font-black text-slate-900 tracking-tight truncate tabular-nums">{value}</p>
+  <div className="bg-white p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 flex flex-col justify-between min-w-0">
+    <div className="flex items-center justify-between gap-1 mb-1.5">
+      <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider leading-tight">{label}</p>
+      <div className="p-1 sm:p-2 bg-slate-50 rounded-xl shrink-0 [&>svg]:size-4 sm:[&>svg]:size-5">{icon}</div>
     </div>
+    <p className="text-base sm:text-xl lg:text-2xl font-black text-slate-900 tracking-tight truncate tabular-nums">{value}</p>
   </div>
 );
 
@@ -1529,7 +1529,7 @@ const AccountsPage = ({
   const total = accounts.reduce((sum, acc) => sum + acc.balance, 0);
 
   return (
-    <div className="flex-1 w-full min-h-0 flex flex-col space-y-8">
+    <div className="w-full space-y-6 sm:space-y-8 pb-6">
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">

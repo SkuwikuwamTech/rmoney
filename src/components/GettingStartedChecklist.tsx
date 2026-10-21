@@ -39,7 +39,9 @@ export const GettingStartedChecklist: React.FC<GettingStartedChecklistProps> = (
     return localStorage.getItem('rmoney_checklist_dismissed') === 'true';
   });
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    return localStorage.getItem('rmoney_checklist_collapsed') === 'true';
+    const saved = localStorage.getItem('rmoney_checklist_collapsed');
+    if (saved !== null) return saved === 'true';
+    return typeof window !== 'undefined' && window.innerWidth < 768;
   });
 
   const [hasBudgets, setHasBudgets] = useState<boolean>(false);
