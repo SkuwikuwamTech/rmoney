@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag to attach APK to (e.g. v1.0.8)'
+        required: false
+        default: 'v1.0.8'
 
 jobs:
   build-android:
@@ -55,6 +60,9 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
+      - name: Build Web Frontend
+        run: npm run build
+
       - name: Prepare Tauri Config for Mobile
         shell: bash
         run: |
@@ -69,25 +77,91 @@ jobs:
         run: npx tauri android init
 
       - name: Build Android APK (Release)
-        run: npx tauri android build --apk --target aarch64 --ci
+        run: npx tauri android build --apk --target aarch64 --target x86_64 --ci
+
+      - name: Locate Android Build Tools
+        id: build-tools
+        shell: bash
+        run: |
+          BUILD_TOOLS_DIR=$(find $ANDROID_HOME/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          echo "BUILD_TOOLS_DIR=$BUILD_TOOLS_DIR" >> $GITHUB_ENV
+          echo "Using Android Build-Tools from: $BUILD_TOOLS_DIR"
+
+      - name: Align and Sign Release APK
+        shell: bash
+        run: |
+          # 1. Locate the generated raw release APK
+          RAW_APK=$(find src-tauri/gen/android/app/build/outputs/apk -name "*.apk" | head -n 1)
+          if [ -z "$RAW_APK" ]; then
+            echo "::error::No release APK found in src-tauri/gen/android/app/build/outputs/apk!"
+            find src-tauri/gen/android -name "*.apk" || true
+            exit 1
+          fi
+          echo "Found raw release APK at: $RAW_APK"
+
+          mkdir -p release-apk
+          ALIGNED_APK="release-apk/rMoney-aligned.apk"
+          FINAL_APK="release-apk/rMoney-v1-universal.apk"
+
+          # 2. 4-byte ZipAlign the APK
+          $BUILD_TOOLS_DIR/zipalign -f -v -p 4 "$RAW_APK" "$ALIGNED_APK"
+
+          # 3. Setup Keystore
+          if [ -n "${{ secrets.ANDROID_SIGNING_KEY }}" ]; then
+            echo "Using repository signing key secret..."
+            echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 --decode > release.keystore
+            KEYSTORE_PASS="${{ secrets.ANDROID_KEY_STORE_PASSWORD }}"
+            KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}"
+            KEY_PASS="${{ secrets.ANDROID_KEY_PASSWORD }}"
+          else
+            echo "Generating self-signed release keystore for distribution..."
+            keytool -genkeypair -v \
+              -keystore release.keystore \
+              -alias rmoney \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass rmoneyapp \
+              -keypass rmoneyapp \
+              -dname "CN=rMoney, OU=Mobile, O=SkuwikuwamTech, C=US"
+            KEYSTORE_PASS="rmoneyapp"
+            KEY_ALIAS="rmoney"
+            KEY_PASS="rmoneyapp"
+          fi
+
+          # 4. Sign the APK using apksigner with v1, v2, and v3 schemes
+          $BUILD_TOOLS_DIR/apksigner sign \
+            --ks release.keystore \
+            --ks-pass pass:"$KEYSTORE_PASS" \
+            --ks-key-alias "$KEY_ALIAS" \
+            --key-pass pass:"$KEY_PASS" \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --out "$FINAL_APK" \
+            "$ALIGNED_APK"
+
+          # 5. Verify the APK signature thoroughly
+          echo "Verifying signed APK with apksigner:"
+          $BUILD_TOOLS_DIR/apksigner verify -v --print-certs "$FINAL_APK"
+
+          rm -f "$ALIGNED_APK" release.keystore
+          echo "Final Signed APK ready:"
+          ls -lh "$FINAL_APK"
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: rmoney-android-apk
-          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
-          if-no-files-found: warn
-
-      - name: Prepare APK for Release
-        run: |
-          mkdir -p release-apk
-          find src-tauri/gen/android/app/build/outputs/apk -name "*.apk" -exec cp {} release-apk/rMoney-v1-universal.apk \;
+          path: release-apk/*.apk
+          if-no-files-found: error
 
       - name: Attach APK to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          files: release-apk/rMoney-v1-universal.apk
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || inputs.tag_name || 'v1.0.8' }}
+          files: release-apk/*.apk
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
