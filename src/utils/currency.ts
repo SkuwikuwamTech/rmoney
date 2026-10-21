@@ -256,15 +256,49 @@ export function formatCurrency(
 }
 
 /**
+ * Converts a Date object to a local YYYY-MM-DD string (avoiding UTC timezone drift).
+ */
+export function toLocalDateStr(date: Date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Returns today's date (or offset in days) as a local YYYY-MM-DD string.
+ */
+export function getLocalTodayStr(daysOffset: number = 0): string {
+  const d = new Date();
+  if (daysOffset !== 0) {
+    d.setDate(d.getDate() + daysOffset);
+  }
+  return toLocalDateStr(d);
+}
+
+/**
+ * Detects whether a transaction payee represents an internal transfer or opening balance
+ * so that internal account movements do not inflate income or spending reports/budgets.
+ */
+export function isTransferPayee(payee?: string | null): boolean {
+  if (!payee) return false;
+  const p = payee.trim();
+  return (
+    p.startsWith('Transfer to ') ||
+    p.startsWith('Transfer from ') ||
+    p.includes(' (To: ') ||
+    p.includes(' (From: ') ||
+    p === 'Opening Balance'
+  );
+}
+
+/**
  * Formats a YYYY-MM-DD string or Date object into the user's chosen date format.
  */
 export function formatDate(dateInput: string | Date, customFormat?: DateFormatOption): string {
   let dateStr = '';
   if (dateInput instanceof Date) {
-    const y = dateInput.getFullYear();
-    const m = String(dateInput.getMonth() + 1).padStart(2, '0');
-    const d = String(dateInput.getDate()).padStart(2, '0');
-    dateStr = `${y}-${m}-${d}`;
+    dateStr = toLocalDateStr(dateInput);
   } else {
     dateStr = String(dateInput || '');
   }

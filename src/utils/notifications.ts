@@ -1,5 +1,6 @@
 import { getDb } from './db';
 import { ScheduledTransaction } from '../types';
+import { formatCurrency, getLocalTodayStr } from './currency';
 
 const STORAGE_NOTIFICATIONS_KEY = 'rmoney_notifications_enabled';
 const STORAGE_LAST_NOTIFIED_KEY = 'rmoney_bills_last_notified';
@@ -58,7 +59,7 @@ export async function sendDesktopNotification(title: string, body: string): Prom
 export async function checkAndNotifyUpcomingBills(): Promise<{ count: number; total: number }> {
   if (!isNotificationEnabled()) return { count: 0, total: 0 };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalTodayStr(0);
   const lastNotified = localStorage.getItem(STORAGE_LAST_NOTIFIED_KEY);
 
   // Avoid notifying more than once per calendar day on launch
@@ -68,15 +69,13 @@ export async function checkAndNotifyUpcomingBills(): Promise<{ count: number; to
 
   try {
     const db = await getDb();
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + 3);
-    const targetDateStr = futureDate.toISOString().split('T')[0];
+    const targetDateStr = getLocalTodayStr(3);
 
     // Find upcoming expense bills
     const upcoming = (await db.select(
-      `SELECT st.*, COALESCE(o.new_date, st.next_date) as effective_date, COALESCE(o.new_amount, st.amount) as effective_amount
+      `SELECT st.*, COALESCE(o.new_date, st.next_date) as effective_date, ABS(COALESCE(o.amount, st.amount)) as effective_amount
        FROM scheduled_transactions st
-       LEFT JOIN scheduled_transaction_overrides o ON o.scheduled_id = st.id AND o.original_date = st.next_date
+       LEFT JOIN scheduled_transaction_overrides o ON o.scheduled_id = st.id AND (o.original_date = st.next_date OR o.date = st.next_date)
        WHERE COALESCE(st.type, 'expense') = 'expense'
          AND COALESCE(o.new_date, st.next_date) <= ?
          AND COALESCE(o.new_date, st.next_date) >= ?
@@ -85,15 +84,15 @@ export async function checkAndNotifyUpcomingBills(): Promise<{ count: number; to
     )) as (ScheduledTransaction & { effective_date: string; effective_amount: number })[];
 
     if (upcoming.length > 0) {
-      const total = upcoming.reduce((sum, b) => sum + (b.effective_amount || b.amount), 0);
+      const total = upcoming.reduce((sum, b) => sum + Math.abs(b.effective_amount || b.amount), 0);
       const title =
         upcoming.length === 1
           ? `Bill Reminder: ${upcoming[0].payee}`
           : `Upcoming Bills: ${upcoming.length} Payments Due Soon`;
       const body =
         upcoming.length === 1
-          ? `Due on ${upcoming[0].effective_date} for $${upcoming[0].effective_amount.toFixed(2)}. Open rMoney to review.`
-          : `${upcoming.length} bills due in the next 3 days totaling $${total.toFixed(2)}.`;
+          ? `Due on ${upcoming[0].effective_date} for ${formatCurrency(Math.abs(upcoming[0].effective_amount))}. Open rMoney to review.`
+          : `${upcoming.length} bills due in the next 3 days totaling ${formatCurrency(total)}.`;
 
       await sendDesktopNotification(title, body);
       localStorage.setItem(STORAGE_LAST_NOTIFIED_KEY, todayStr);

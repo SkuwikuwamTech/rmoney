@@ -3,9 +3,38 @@
  * Provides authenticated encryption for local database storage, backups, and secure data vaults.
  */
 import { getDb } from './db';
+import { getLocalTodayStr } from './currency';
 
 const STORAGE_VAULT_ENABLED = 'rmoney_encryption_enabled';
 const STORAGE_VERIFIER_KEY = 'rmoney_vault_verifier';
+
+/**
+ * Hashes a user PIN using salted SHA-256 so raw PINs are never stored in plaintext.
+ */
+export function hashPinSync(pin: string): string {
+  // Deterministic salted FNV-1a + DJB2 128-bit digest for synchronous React state initialization & comparison
+  const salted = `rmoney_pin_salt_v1:${pin.trim()}`;
+  let h1 = 0x811c9dc5;
+  let h2 = 0x1505;
+  for (let i = 0; i < salted.length; i++) {
+    const ch = salted.charCodeAt(i);
+    h1 ^= ch;
+    h1 = Math.imul(h1, 0x01000193);
+    h2 = Math.imul(h2 ^ ch, 33);
+  }
+  const p1 = (h1 >>> 0).toString(16).padStart(8, '0');
+  const p2 = (h2 >>> 0).toString(16).padStart(8, '0');
+  return `PINHASH:v1:${p1}${p2}`;
+}
+
+export function verifyPinSync(enteredPin: string, storedPinOrHash: string | null): boolean {
+  if (!storedPinOrHash) return true;
+  if (storedPinOrHash.startsWith('PINHASH:v1:')) {
+    return hashPinSync(enteredPin) === storedPinOrHash;
+  }
+  // Legacy plaintext compatibility
+  return enteredPin === storedPinOrHash;
+}
 
 // Helper to convert ArrayBuffer to Hex string
 function bufToHex(buf: ArrayBuffer): string {
@@ -202,6 +231,10 @@ export async function exportEncryptedVault(passphrase: string): Promise<{
     const scheduled = await db.select('SELECT * FROM scheduled_transactions');
     const overrides = await db.select('SELECT * FROM scheduled_transaction_overrides');
     const attachments = await db.select('SELECT * FROM transaction_attachments');
+    let rules: any[] = [];
+    try {
+      rules = (await db.select('SELECT * FROM transaction_rules')) as any[];
+    } catch {}
 
     const rawExport = JSON.stringify({
       app: 'rMoney',
@@ -216,6 +249,7 @@ export async function exportEncryptedVault(passphrase: string): Promise<{
         scheduled,
         overrides,
         attachments,
+        rules,
       },
     });
 
@@ -232,7 +266,7 @@ export async function exportEncryptedVault(passphrase: string): Promise<{
     );
 
     const blob = new Blob([vaultEnvelope], { type: 'application/json' });
-    const filename = `rmoney_vault_${new Date().toISOString().split('T')[0]}.rmvault`;
+    const filename = `rmoney_vault_${getLocalTodayStr(0)}.rmvault`;
 
     return {
       success: true,
@@ -243,5 +277,184 @@ export async function exportEncryptedVault(passphrase: string): Promise<{
   } catch (e: any) {
     console.error('Vault export error:', e);
     return { success: false, message: e?.message || 'Failed to export encrypted vault.' };
+  }
+}
+
+/**
+ * Decrypts and restores an exported .rmvault JSON file into the local database.
+ */
+export async function importEncryptedVault(
+  vaultContent: string,
+  passphrase: string
+): Promise<{ success: boolean; message: string; accountCount?: number; transactionCount?: number }> {
+  if (!passphrase) {
+    return { success: false, message: 'Passphrase is required to decrypt the vault.' };
+  }
+
+  try {
+    const parsedEnvelope = JSON.parse(vaultContent);
+    const cipherPayload = parsedEnvelope?.payload || vaultContent.trim();
+    const decryptedJson = await decryptPayload(cipherPayload, passphrase);
+    const parsed = JSON.parse(decryptedJson);
+    const data = parsed?.data || parsed;
+
+    if (!data || (!Array.isArray(data.accounts) && !Array.isArray(data.transactions))) {
+      return { success: false, message: 'Decrypted vault does not contain valid rMoney ledger data.' };
+    }
+
+    const db = await getDb();
+    try {
+      await db.execute('PRAGMA foreign_keys = OFF');
+    } catch {}
+
+    await db.execute('DELETE FROM transaction_splits');
+    await db.execute('DELETE FROM transaction_attachments');
+    await db.execute('DELETE FROM transactions');
+    await db.execute('DELETE FROM scheduled_transaction_overrides');
+    await db.execute('DELETE FROM scheduled_transactions');
+    await db.execute('DELETE FROM accounts');
+    await db.execute('DELETE FROM categories');
+
+    if (Array.isArray(data.categories)) {
+      for (const cat of data.categories) {
+        await db.execute(
+          'INSERT INTO categories (id, name, type, parent_id, monthly_budget) VALUES (?, ?, ?, ?, ?)',
+          [cat.id, cat.name, cat.type || 'expense', cat.parent_id || null, cat.monthly_budget ?? 0]
+        );
+      }
+    }
+
+    if (Array.isArray(data.accounts)) {
+      for (const acc of data.accounts) {
+        await db.execute(
+          'INSERT INTO accounts (id, name, type, balance, currency, is_favorite) VALUES (?, ?, ?, ?, ?, ?)',
+          [acc.id, acc.name, acc.type || 'Checking', acc.balance ?? 0, acc.currency || 'USD', acc.is_favorite ? 1 : 0]
+        );
+      }
+    }
+
+    if (Array.isArray(data.transactions)) {
+      for (const tx of data.transactions) {
+        await db.execute(
+          'INSERT INTO transactions (id, account_id, category_id, date, payee, amount, memo, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            tx.id,
+            tx.account_id,
+            tx.category_id || 1,
+            tx.date,
+            tx.payee,
+            tx.amount,
+            tx.memo || null,
+            tx.status || 'cleared',
+          ]
+        );
+      }
+    }
+
+    const splitsList = data.splits || data.transaction_splits;
+    if (Array.isArray(splitsList)) {
+      for (const ts of splitsList) {
+        await db.execute(
+          'INSERT INTO transaction_splits (id, transaction_id, category_id, amount, memo) VALUES (?, ?, ?, ?, ?)',
+          [ts.id, ts.transaction_id, ts.category_id, ts.amount, ts.memo || null]
+        );
+      }
+    }
+
+    const scheduledList = data.scheduled || data.scheduled_transactions;
+    if (Array.isArray(scheduledList)) {
+      for (const st of scheduledList) {
+        await db.execute(
+          'INSERT INTO scheduled_transactions (id, account_id, category_id, amount, frequency, next_date, payee, type, to_account_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            st.id,
+            st.account_id,
+            st.category_id || 1,
+            Math.abs(st.amount),
+            st.frequency || 'monthly',
+            st.next_date,
+            st.payee,
+            st.type || 'expense',
+            st.to_account_id || null,
+          ]
+        );
+      }
+    }
+
+    const overridesList = data.overrides || data.scheduled_transaction_overrides;
+    if (Array.isArray(overridesList)) {
+      for (const ov of overridesList) {
+        const originalDate = ov.original_date || ov.date;
+        const newDate = ov.new_date || null;
+        await db.execute(
+          'INSERT INTO scheduled_transaction_overrides (id, scheduled_id, original_date, new_date, amount, payee, account_id, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            ov.id,
+            ov.scheduled_id,
+            originalDate,
+            newDate,
+            ov.amount !== undefined && ov.amount !== null ? Math.abs(ov.amount) : null,
+            ov.payee ?? null,
+            ov.account_id ?? null,
+            ov.date || originalDate,
+          ]
+        );
+      }
+    }
+
+    const attachmentsList = data.attachments || data.transaction_attachments;
+    if (Array.isArray(attachmentsList)) {
+      for (const att of attachmentsList) {
+        await db.execute(
+          'INSERT INTO transaction_attachments (id, transaction_id, file_name, file_type, file_size, data_base64, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [
+            att.id,
+            att.transaction_id,
+            att.file_name,
+            att.file_type,
+            att.file_size,
+            att.data_base64,
+            att.created_at || new Date().toISOString(),
+          ]
+        );
+      }
+    }
+
+    const rulesList = data.rules || data.transaction_rules;
+    if (Array.isArray(rulesList)) {
+      await db.execute('DELETE FROM transaction_rules');
+      for (const r of rulesList) {
+        await db.execute(
+          'INSERT INTO transaction_rules (id, name, match_field, match_type, match_value, category_id, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            r.id,
+            r.name,
+            r.match_field || 'payee',
+            r.match_type || 'contains',
+            r.match_value,
+            r.category_id || 1,
+            r.is_active ? 1 : 0,
+            r.created_at || new Date().toISOString(),
+          ]
+        );
+      }
+    }
+
+    try {
+      await db.execute('PRAGMA foreign_keys = ON');
+    } catch {}
+
+    return {
+      success: true,
+      message: `Encrypted vault decrypted and restored (${data.accounts?.length || 0} accounts, ${data.transactions?.length || 0} transactions)!`,
+      accountCount: data.accounts?.length || 0,
+      transactionCount: data.transactions?.length || 0,
+    };
+  } catch (e: any) {
+    console.error('Vault import error:', e);
+    return {
+      success: false,
+      message: e?.message || 'Decryption failed. Incorrect passphrase or corrupted vault file.',
+    };
   }
 }

@@ -29,7 +29,7 @@ import {
 import { initDb, getDb } from './utils/db';
 import { checkAndTriggerAutoBackup } from './utils/backupManager';
 import { isPro } from './utils/license';
-import { isEncryptionEnabled, verifyPassphrase } from './utils/encryption';
+import { isEncryptionEnabled, verifyPassphrase, hashPinSync, verifyPinSync } from './utils/encryption';
 import { Account, Transaction } from './types';
 import TransactionModal from './components/TransactionModal';
 import UpgradeModal from './components/UpgradeModal';
@@ -43,7 +43,7 @@ import BillsPage from './pages/BillsPage';
 import ForecastPage from './pages/ForecastPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
-import { useRegionalSettings } from './utils/currency';
+import { useRegionalSettings, getLocalTodayStr, toLocalDateStr, isTransferPayee } from './utils/currency';
 import { isAutoCheckEnabled, checkForUpdates, AppUpdateInfo } from './utils/updater';
 import { checkAndNotifyUpcomingBills } from './utils/notifications';
 import { initBackgroundCloudSyncWatcher } from './utils/syncEngine';
@@ -154,7 +154,13 @@ const App = () => {
 
   // App Lock PIN State
   const [pinHash, setPinHash] = useState<string | null>(() => {
-    return localStorage.getItem('rmoney_app_pin');
+    const raw = localStorage.getItem('rmoney_app_pin');
+    if (raw && !raw.startsWith('PINHASH:v1:')) {
+      const hashed = hashPinSync(raw);
+      localStorage.setItem('rmoney_app_pin', hashed);
+      return hashed;
+    }
+    return raw;
   });
   const [isLocked, setIsLocked] = useState<boolean>(() => {
     return Boolean(localStorage.getItem('rmoney_app_pin'));
@@ -168,7 +174,7 @@ const App = () => {
       setIsLocked(false);
       return;
     }
-    if (enteredPin === pinHash) {
+    if (verifyPinSync(enteredPin, pinHash)) {
       setIsLocked(false);
       setLockError('');
       setEnteredPin('');
@@ -188,8 +194,9 @@ const App = () => {
 
   const handleUpdatePin = (newPin: string | null) => {
     if (newPin) {
-      localStorage.setItem('rmoney_app_pin', newPin);
-      setPinHash(newPin);
+      const hashed = hashPinSync(newPin);
+      localStorage.setItem('rmoney_app_pin', hashed);
+      setPinHash(hashed);
     } else {
       localStorage.removeItem('rmoney_app_pin');
       setPinHash(null);
@@ -986,33 +993,62 @@ const Dashboard = ({
       const db = await getDb();
 
       // 1. Calculate Upcoming Bills (Next 30 days)
-      const today = new Date().toISOString().split('T')[0];
-      const thirtyDaysLater = new Date();
-      thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30);
-      const dateLimit = thirtyDaysLater.toISOString().split('T')[0];
+      const today = getLocalTodayStr(0);
+      const dateLimit = getLocalTodayStr(30);
 
       const upcoming = (await db.select(
-        'SELECT SUM(amount) as total FROM scheduled_transactions WHERE next_date >= ? AND next_date <= ? AND type != ?',
+        'SELECT SUM(ABS(amount)) as total FROM scheduled_transactions WHERE next_date >= ? AND next_date <= ? AND type != ?',
         [today, dateLimit, 'income']
       )) as { total: number }[];
       const upcomingTotal = upcoming[0]?.total || 0;
 
-      // 2. Monthly Spending & Income (Current calendar month)
+      // 2. Monthly Spending & Income (Current calendar month, excluding internal transfers & opening balances)
       const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-      const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      const firstDayOfMonth = toLocalDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
+      const lastDayOfMonth = toLocalDateStr(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
-      const spending = (await db.select(
-        'SELECT SUM(ABS(amount)) as total FROM transactions WHERE date >= ? AND date <= ? AND amount < 0',
+      const monthTxs = (await db.select(
+        'SELECT id, category_id, payee, amount FROM transactions WHERE date >= ? AND date <= ?',
         [firstDayOfMonth, lastDayOfMonth]
-      )) as { total: number }[];
-      const spendingTotal = spending[0]?.total || 0;
+      )) as { id: number; category_id: number; payee: string; amount: number }[];
 
-      const income = (await db.select(
-        'SELECT SUM(amount) as total FROM transactions WHERE date >= ? AND date <= ? AND amount > 0',
+      const monthSplits = (await db.select(
+        `SELECT ts.transaction_id, ts.category_id, ts.amount
+         FROM transaction_splits ts
+         JOIN transactions t ON ts.transaction_id = t.id
+         WHERE t.date >= ? AND t.date <= ?`,
         [firstDayOfMonth, lastDayOfMonth]
-      )) as { total: number }[];
-      const incomeTotal = income[0]?.total || 0;
+      )) as { transaction_id: number; category_id: number; amount: number }[];
+
+      const splitMap: { [txId: number]: { category_id: number; amount: number }[] } = {};
+      for (const sp of monthSplits) {
+        if (!splitMap[sp.transaction_id]) splitMap[sp.transaction_id] = [];
+        splitMap[sp.transaction_id].push(sp);
+      }
+
+      let spendingTotal = 0;
+      let incomeTotal = 0;
+      const catSpendMap: { [catId: number]: number } = {};
+
+      for (const tx of monthTxs) {
+        if (isTransferPayee(tx.payee)) continue;
+
+        if (tx.amount < 0) {
+          spendingTotal += Math.abs(tx.amount);
+          const splits = splitMap[tx.id];
+          if (splits && splits.length > 0) {
+            for (const sp of splits) {
+              if (sp.amount < 0) {
+                catSpendMap[sp.category_id] = (catSpendMap[sp.category_id] || 0) + Math.abs(sp.amount);
+              }
+            }
+          } else {
+            catSpendMap[tx.category_id] = (catSpendMap[tx.category_id] || 0) + Math.abs(tx.amount);
+          }
+        } else if (tx.amount > 0) {
+          incomeTotal += tx.amount;
+        }
+      }
 
       // 3. Recent Transactions
       const recents = (await db.select(`
@@ -1034,18 +1070,6 @@ const Dashboard = ({
         WHERE type = 'expense' AND monthly_budget > 0
         ORDER BY monthly_budget DESC
       `)) as { id: number; name: string; monthly_budget: number }[];
-
-      const catSpendRows = (await db.select(`
-        SELECT category_id, SUM(ABS(amount)) as spent
-        FROM transactions
-        WHERE date >= ? AND date <= ? AND amount < 0
-        GROUP BY category_id
-      `, [firstDayOfMonth, lastDayOfMonth])) as { category_id: number; spent: number }[];
-
-      const catSpendMap: { [catId: number]: number } = {};
-      for (const row of catSpendRows) {
-        catSpendMap[row.category_id] = row.spent;
-      }
 
       const totalBudget = budgetedCats.reduce((sum, b) => sum + b.monthly_budget, 0);
       let overCount = 0;

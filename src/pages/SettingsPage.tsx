@@ -72,6 +72,7 @@ import {
   setupEncryption,
   disableEncryption,
   exportEncryptedVault,
+  importEncryptedVault,
 } from '../utils/encryption';
 import {
   getTransactionRules,
@@ -88,6 +89,7 @@ import {
   SUPPORTED_CURRENCIES,
   SUPPORTED_DATE_FORMATS,
   DateFormatOption,
+  getLocalTodayStr,
 } from '../utils/currency';
 
 interface SettingsPageProps {
@@ -649,24 +651,36 @@ const SettingsPage = ({
       const accounts = await db.select('SELECT * FROM accounts');
       const categories = await db.select('SELECT * FROM categories');
       const transactions = await db.select('SELECT * FROM transactions');
+      const splits = await db.select('SELECT * FROM transaction_splits');
       const scheduled = await db.select('SELECT * FROM scheduled_transactions');
       const overrides = await db.select('SELECT * FROM scheduled_transaction_overrides');
+      let rules: any[] = [];
+      let attachments: any[] = [];
+      try {
+        rules = (await db.select('SELECT * FROM transaction_rules')) as any[];
+      } catch {}
+      try {
+        attachments = (await db.select('SELECT * FROM transaction_attachments')) as any[];
+      } catch {}
 
       const backupData = {
         exportDate: new Date().toISOString(),
-        version: '0.1.0',
+        version: '1.0.2',
         accounts,
         categories,
         transactions,
+        transaction_splits: splits,
         scheduled_transactions: scheduled,
         scheduled_transaction_overrides: overrides,
+        transaction_rules: rules,
+        transaction_attachments: attachments,
       };
 
       const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `rmoney_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `rmoney_backup_${getLocalTodayStr(0)}.json`;
       a.click();
       URL.revokeObjectURL(url);
       showStatus('Backup exported as JSON!');
@@ -683,6 +697,25 @@ const SettingsPage = ({
     try {
       const text = await file.text();
       const data = JSON.parse(text);
+
+      // Support restoring encrypted .rmvault files seamlessly
+      if (data?.rMoneyVault && data?.payload) {
+        const pass = prompt('This is an encrypted rMoney Security Vault (.rmvault). Enter its master passphrase to decrypt and restore:');
+        if (!pass) {
+          e.target.value = '';
+          return;
+        }
+        const vaultRes = await importEncryptedVault(text, pass);
+        if (vaultRes.success) {
+          showStatus(vaultRes.message);
+          await loadCategories();
+          if (onDataRestored) await onDataRestored();
+        } else {
+          showStatus(vaultRes.message, 'error');
+        }
+        e.target.value = '';
+        return;
+      }
 
       if (!data || (!data.accounts && !data.categories && !data.transactions)) {
         alert('Invalid backup file. The selected JSON does not contain valid rMoney backup data.');
@@ -718,6 +751,8 @@ WARNING: This will replace your current data with the contents of this backup fi
         console.warn('Could not disable PRAGMA foreign_keys:', err);
       }
 
+      await db.execute('DELETE FROM transaction_splits');
+      await db.execute('DELETE FROM transaction_attachments');
       await db.execute('DELETE FROM transactions');
       await db.execute('DELETE FROM scheduled_transaction_overrides');
       await db.execute('DELETE FROM scheduled_transactions');
@@ -728,8 +763,8 @@ WARNING: This will replace your current data with the contents of this backup fi
       if (Array.isArray(data.categories)) {
         for (const cat of data.categories) {
           await db.execute(
-            'INSERT INTO categories (id, name, type, parent_id) VALUES (?, ?, ?, ?)',
-            [cat.id, cat.name, cat.type || 'expense', cat.parent_id || null]
+            'INSERT INTO categories (id, name, type, parent_id, monthly_budget) VALUES (?, ?, ?, ?, ?)',
+            [cat.id, cat.name, cat.type || 'expense', cat.parent_id || null, cat.monthly_budget ?? 0]
           );
         }
       }
@@ -755,7 +790,7 @@ WARNING: This will replace your current data with the contents of this backup fi
       if (Array.isArray(data.transactions)) {
         for (const tx of data.transactions) {
           await db.execute(
-            'INSERT INTO transactions (id, account_id, category_id, date, payee, amount, memo) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO transactions (id, account_id, category_id, date, payee, amount, memo, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
             [
               tx.id,
               tx.account_id,
@@ -764,7 +799,18 @@ WARNING: This will replace your current data with the contents of this backup fi
               tx.payee,
               tx.amount,
               tx.memo || null,
+              tx.status || 'cleared',
             ]
+          );
+        }
+      }
+
+      // 3b. Transaction Splits
+      if (Array.isArray(data.transaction_splits)) {
+        for (const ts of data.transaction_splits) {
+          await db.execute(
+            'INSERT INTO transaction_splits (id, transaction_id, category_id, amount, memo) VALUES (?, ?, ?, ?, ?)',
+            [ts.id, ts.transaction_id, ts.category_id, ts.amount, ts.memo || null]
           );
         }
       }
@@ -778,7 +824,7 @@ WARNING: This will replace your current data with the contents of this backup fi
               st.id,
               st.account_id,
               st.category_id || 1,
-              st.amount,
+              Math.abs(st.amount),
               st.frequency || 'monthly',
               st.next_date,
               st.payee,
@@ -802,12 +848,54 @@ WARNING: This will replace your current data with the contents of this backup fi
               originalDate,
               newDate,
               ov.date || originalDate,
-              ov.amount ?? null,
+              ov.amount !== undefined && ov.amount !== null ? Math.abs(ov.amount) : null,
               ov.payee ?? null,
               ov.account_id ?? null,
             ]
           );
         }
+      }
+
+      // 6. Transaction Rules
+      if (Array.isArray(data.transaction_rules)) {
+        try {
+          await db.execute('DELETE FROM transaction_rules');
+          for (const r of data.transaction_rules) {
+            await db.execute(
+              'INSERT INTO transaction_rules (id, name, match_field, match_type, match_value, category_id, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+              [
+                r.id,
+                r.name,
+                r.match_field || 'payee',
+                r.match_type || 'contains',
+                r.match_value,
+                r.category_id || 1,
+                r.is_active ? 1 : 0,
+                r.created_at || new Date().toISOString(),
+              ]
+            );
+          }
+        } catch {}
+      }
+
+      // 7. Transaction Attachments
+      if (Array.isArray(data.transaction_attachments)) {
+        try {
+          for (const att of data.transaction_attachments) {
+            await db.execute(
+              'INSERT INTO transaction_attachments (id, transaction_id, file_name, file_type, file_size, data_base64, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+              [
+                att.id,
+                att.transaction_id,
+                att.file_name,
+                att.file_type,
+                att.file_size,
+                att.data_base64,
+                att.created_at || new Date().toISOString(),
+              ]
+            );
+          }
+        } catch {}
       }
 
       // Re-enable foreign keys
@@ -819,6 +907,7 @@ WARNING: This will replace your current data with the contents of this backup fi
 
       showStatus(`Backup successfully restored (${accountCount} accounts, ${txCount} transactions)!`);
       await loadCategories();
+      await loadRules();
       if (onDataRestored) {
         await onDataRestored();
       }

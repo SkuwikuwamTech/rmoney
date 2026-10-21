@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, ArrowUpCircle, ArrowDownCircle, ArrowRightLeft, Paperclip, Upload } from 'lucide-react';
 import { getDb } from '../utils/db';
 import { Account, Category, TransactionRule } from '../types';
-import { useRegionalSettings } from '../utils/currency';
+import { useRegionalSettings, getLocalTodayStr } from '../utils/currency';
 import { getTransactionRules, matchRuleForTransaction } from '../utils/rulesEngine';
 
 interface TransactionModalProps {
@@ -37,7 +37,7 @@ const TransactionModal = ({
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState<number>(1);
   const [memo, setMemo] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => getLocalTodayStr(0));
   const [attachedFile, setAttachedFile] = useState<{ name: string; type: string; size: number; base64: string } | null>(null);
 
   const [accounts, setAccounts] = useState<Account[]>(propAccounts || []);
@@ -81,7 +81,7 @@ const TransactionModal = ({
       setPayee('');
       setAmount('');
       setMemo('');
-      setDate(new Date().toISOString().split('T')[0]);
+      setDate(getLocalTodayStr(0));
       setAttachedFile(null);
     }
   }, [isOpen, defaultAccountId, accountId]);

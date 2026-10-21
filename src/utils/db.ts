@@ -133,6 +133,9 @@ export async function initDb() {
   try { await db.execute('ALTER TABLE scheduled_transaction_overrides ADD COLUMN new_date TEXT'); } catch (e) {}
   try { await db.execute('UPDATE scheduled_transaction_overrides SET original_date = date WHERE original_date IS NULL'); } catch (e) {}
   try { await db.execute('ALTER TABLE categories ADD COLUMN monthly_budget REAL DEFAULT 0'); } catch (e) {}
+  // Normalize scheduled transaction amounts to positive magnitudes (direction is determined by `type`)
+  try { await db.execute('UPDATE scheduled_transactions SET amount = ABS(amount) WHERE amount < 0'); } catch (e) {}
+  try { await db.execute('UPDATE scheduled_transaction_overrides SET amount = ABS(amount) WHERE amount < 0'); } catch (e) {}
 
   // Ensure default categories exist if categories table is empty
   try {

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { getDb } from '../utils/db';
 import { ScheduledTransaction, Account, Category, ScheduledTransactionOverride } from '../types';
-import { useRegionalSettings } from '../utils/currency';
+import { useRegionalSettings, getLocalTodayStr } from '../utils/currency';
 
 function calculateNextDate(currentDateStr: string, frequency: string): string {
   const parts = currentDateStr.split('-').map(Number);
@@ -78,7 +78,7 @@ const BillsPage = () => {
     payee: '',
     amount: '',
     frequency: 'monthly' as 'once' | 'daily' | 'weekly' | 'bi-weekly' | 'monthly' | 'yearly',
-    nextDate: new Date().toISOString().split('T')[0],
+    nextDate: getLocalTodayStr(0),
     accountId: 0,
     categoryId: 0,
     type: 'expense' as 'income' | 'expense' | 'transfer',
@@ -87,7 +87,7 @@ const BillsPage = () => {
 
   // Form State for Instance-Only Editing
   const [instanceForm, setInstanceForm] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalTodayStr(0),
     payee: '',
     amount: '',
   });
@@ -119,9 +119,12 @@ const BillsPage = () => {
       const billsWithOverrides = billsResult.map((bill) => {
         const ov = overrideMap.get(`${bill.id}_${bill.next_date}`);
         const isDateChanged = !!(ov?.new_date && ov.new_date.trim() && ov.new_date.trim() !== bill.next_date);
+        const normBillAmt = Math.abs(bill.amount);
+        const normOvAmt = ov?.amount !== undefined && ov?.amount !== null ? Math.abs(ov.amount) : normBillAmt;
         return {
           ...bill,
-          effective_amount: ov?.amount !== undefined && ov?.amount !== null ? ov.amount : bill.amount,
+          amount: normBillAmt,
+          effective_amount: normOvAmt,
           effective_payee:
             ov?.payee !== undefined && ov?.payee !== null && ov.payee.trim()
               ? ov.payee

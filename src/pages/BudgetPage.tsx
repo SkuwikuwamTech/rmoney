@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { getDb } from '../utils/db';
 import { Category, CategoryBudgetProgress } from '../types';
-import { useRegionalSettings } from '../utils/currency';
+import { useRegionalSettings, isTransferPayee } from '../utils/currency';
 
 interface RawTxForBudget {
   id: number;
@@ -181,8 +181,8 @@ const BudgetPage = () => {
     const spending: { [catId: number]: number } = {};
 
     for (const tx of monthTxs) {
-      // Exclude transfers
-      if (tx.payee.startsWith('Transfer to ') || tx.payee.startsWith('Transfer from ')) {
+      // Exclude transfers and opening balances
+      if (isTransferPayee(tx.payee)) {
         continue;
       }
 
@@ -286,7 +286,7 @@ const BudgetPage = () => {
     const list: { key: string; id: number; payee: string; amount: number; date: string; memo?: string; isSplit: boolean }[] = [];
 
     for (const tx of monthTxs) {
-      if (tx.payee.startsWith('Transfer to ') || tx.payee.startsWith('Transfer from ')) {
+      if (isTransferPayee(tx.payee)) {
         continue;
       }
       const splits = splitMap[tx.id];

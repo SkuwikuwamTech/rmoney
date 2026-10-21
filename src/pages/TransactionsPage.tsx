@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { getDb } from '../utils/db';
 import { Transaction, Account, Category, TransactionRule } from '../types';
-import { useRegionalSettings } from '../utils/currency';
+import { useRegionalSettings, getLocalTodayStr } from '../utils/currency';
 import { getTransactionRules, matchRuleForTransaction } from '../utils/rulesEngine';
 import {
   Search,
@@ -48,7 +48,7 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
   const [isReconciling, setIsReconciling] = useState(false);
   const [reconcileAccountId, setReconcileAccountId] = useState<number>(0);
   const [statementBalance, setStatementBalance] = useState<string>('');
-  const [statementDate, setStatementDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [statementDate, setStatementDate] = useState<string>(() => getLocalTodayStr(0));
   const [tempCheckedIds, setTempCheckedIds] = useState<Set<number>>(new Set());
 
   // Quick toggle transaction status (uncleared -> cleared -> reconciled -> uncleared)
@@ -72,7 +72,7 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
     const targetAccId = selectedAccountId !== 'all' ? selectedAccountId : accounts[0]?.id || 0;
     setReconcileAccountId(targetAccId);
     setStatementBalance('');
-    setStatementDate(new Date().toISOString().split('T')[0]);
+    setStatementDate(getLocalTodayStr(0));
 
     // Pre-check all already-cleared or reconciled items for this account
     const checked = new Set<number>();
@@ -116,7 +116,7 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
   const [form, setForm] = useState({
     payee: '',
     amount: '',
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalTodayStr(0),
     accountId: 0,
     toAccountId: 0,
     categoryId: 0,
@@ -649,7 +649,7 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
       setForm({
         payee: '',
         amount: '',
-        date: new Date().toISOString().split('T')[0],
+        date: getLocalTodayStr(0),
         accountId: accounts[0]?.id || 0,
         toAccountId: accounts.length > 1 ? accounts[1].id : 0,
         categoryId: categories[0]?.id || 0,

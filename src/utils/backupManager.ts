@@ -1,5 +1,14 @@
 import { getDb } from './db';
-import { Account, Category, Transaction, ScheduledTransaction, ScheduledTransactionOverride, TransactionSplit } from '../types';
+import {
+  Account,
+  Category,
+  Transaction,
+  ScheduledTransaction,
+  ScheduledTransactionOverride,
+  TransactionSplit,
+  TransactionRule,
+  TransactionAttachment,
+} from '../types';
 
 export interface RollingBackupMeta {
   id: number;
@@ -23,6 +32,14 @@ export async function createRollingBackup(
   const splits = (await db.select('SELECT * FROM transaction_splits')) as TransactionSplit[];
   const scheduledTransactions = (await db.select('SELECT * FROM scheduled_transactions')) as ScheduledTransaction[];
   const scheduledOverrides = (await db.select('SELECT * FROM scheduled_transaction_overrides')) as ScheduledTransactionOverride[];
+  let transactionRules: TransactionRule[] = [];
+  let transactionAttachments: TransactionAttachment[] = [];
+  try {
+    transactionRules = (await db.select('SELECT * FROM transaction_rules')) as TransactionRule[];
+  } catch {}
+  try {
+    transactionAttachments = (await db.select('SELECT * FROM transaction_attachments')) as TransactionAttachment[];
+  } catch {}
 
   const payload = {
     version: '1.0',
@@ -33,6 +50,8 @@ export async function createRollingBackup(
     transaction_splits: splits,
     scheduled_transactions: scheduledTransactions,
     scheduled_transaction_overrides: scheduledOverrides,
+    transaction_rules: transactionRules,
+    transaction_attachments: transactionAttachments,
   };
 
   const jsonStr = JSON.stringify(payload);
@@ -89,6 +108,7 @@ export async function restoreRollingBackup(id: number): Promise<boolean> {
 
   // Clear existing records
   await db.execute('DELETE FROM transaction_splits');
+  await db.execute('DELETE FROM transaction_attachments');
   await db.execute('DELETE FROM transactions');
   await db.execute('DELETE FROM scheduled_transaction_overrides');
   await db.execute('DELETE FROM scheduled_transactions');
@@ -99,8 +119,8 @@ export async function restoreRollingBackup(id: number): Promise<boolean> {
   if (Array.isArray(data.categories)) {
     for (const cat of data.categories) {
       await db.execute(
-        'INSERT INTO categories (id, name, type, parent_id) VALUES (?, ?, ?, ?)',
-        [cat.id, cat.name, cat.type || 'expense', cat.parent_id || null]
+        'INSERT INTO categories (id, name, type, parent_id, monthly_budget) VALUES (?, ?, ?, ?, ?)',
+        [cat.id, cat.name, cat.type || 'expense', cat.parent_id || null, cat.monthly_budget ?? 0]
       );
     }
   }
@@ -160,7 +180,7 @@ export async function restoreRollingBackup(id: number): Promise<boolean> {
           st.id,
           st.account_id,
           st.category_id || 1,
-          st.amount,
+          Math.abs(st.amount),
           st.frequency || 'monthly',
           st.next_date,
           st.payee,
@@ -183,12 +203,58 @@ export async function restoreRollingBackup(id: number): Promise<boolean> {
           ov.scheduled_id,
           originalDate,
           newDate,
-          ov.amount ?? null,
+          ov.amount !== undefined && ov.amount !== null ? Math.abs(ov.amount) : null,
           ov.payee ?? null,
           ov.account_id ?? null,
           ov.date || originalDate,
         ]
       );
+    }
+  }
+
+  // 7. Transaction Rules
+  if (Array.isArray(data.transaction_rules)) {
+    try {
+      await db.execute('DELETE FROM transaction_rules');
+      for (const r of data.transaction_rules) {
+        await db.execute(
+          'INSERT INTO transaction_rules (id, name, match_field, match_type, match_value, category_id, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            r.id,
+            r.name,
+            r.match_field || 'payee',
+            r.match_type || 'contains',
+            r.match_value,
+            r.category_id || 1,
+            r.is_active ? 1 : 0,
+            r.created_at || new Date().toISOString(),
+          ]
+        );
+      }
+    } catch (err) {
+      console.warn('Could not restore transaction_rules:', err);
+    }
+  }
+
+  // 8. Transaction Attachments
+  if (Array.isArray(data.transaction_attachments)) {
+    try {
+      for (const att of data.transaction_attachments) {
+        await db.execute(
+          'INSERT INTO transaction_attachments (id, transaction_id, file_name, file_type, file_size, data_base64, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [
+            att.id,
+            att.transaction_id,
+            att.file_name,
+            att.file_type,
+            att.file_size,
+            att.data_base64,
+            att.created_at || new Date().toISOString(),
+          ]
+        );
+      }
+    } catch (err) {
+      console.warn('Could not restore transaction_attachments:', err);
     }
   }
 

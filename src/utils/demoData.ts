@@ -1,5 +1,6 @@
 import { getDb } from './db';
 import { Account } from '../types';
+import { getLocalTodayStr } from './currency';
 
 export const DEFAULT_CATEGORIES = [
   { id: 1, name: 'Salary', type: 'income' as const, monthly_budget: 0 },
@@ -36,6 +37,8 @@ export async function seedDemoData(force: boolean = false): Promise<{ success: b
   }
 
   // Clear existing data
+  await db.execute('DELETE FROM transaction_splits');
+  await db.execute('DELETE FROM transaction_attachments');
   await db.execute('DELETE FROM transactions');
   await db.execute('DELETE FROM scheduled_transaction_overrides');
   await db.execute('DELETE FROM scheduled_transactions');
@@ -78,10 +81,8 @@ export async function seedDemoData(force: boolean = false): Promise<{ success: b
   }
 
   // Helper date generators relative to today so the demo is always fresh and realistic
-  const now = new Date();
   const formatOffset = (daysOffset: number): string => {
-    const d = new Date(now.getTime() + daysOffset * 86400000);
-    return d.toISOString().split('T')[0];
+    return getLocalTodayStr(daysOffset);
   };
 
   // 3. Seed Scheduled Transactions (Bills & Recurring Income)
@@ -101,7 +102,7 @@ export async function seedDemoData(force: boolean = false): Promise<{ success: b
       id: 2,
       account_id: 1,
       category_id: 4,
-      amount: -1650.00,
+      amount: 1650.00,
       frequency: 'monthly',
       next_date: formatOffset(11),
       payee: 'Metropolitan Luxury Apartments',
@@ -112,7 +113,7 @@ export async function seedDemoData(force: boolean = false): Promise<{ success: b
       id: 3,
       account_id: 1,
       category_id: 7,
-      amount: -145.20,
+      amount: 145.20,
       frequency: 'monthly',
       next_date: formatOffset(7),
       payee: 'City Electric & Power',
@@ -123,7 +124,7 @@ export async function seedDemoData(force: boolean = false): Promise<{ success: b
       id: 4,
       account_id: 1,
       category_id: 8,
-      amount: -89.99,
+      amount: 89.99,
       frequency: 'monthly',
       next_date: formatOffset(14),
       payee: 'Gigabit Fiber Internet',
@@ -134,7 +135,7 @@ export async function seedDemoData(force: boolean = false): Promise<{ success: b
       id: 5,
       account_id: 1,
       category_id: 11,
-      amount: -19.99,
+      amount: 19.99,
       frequency: 'monthly',
       next_date: formatOffset(2),
       payee: 'Netflix & Spotify Premium',
@@ -145,7 +146,7 @@ export async function seedDemoData(force: boolean = false): Promise<{ success: b
       id: 6,
       account_id: 1,
       category_id: 13,
-      amount: -500.00,
+      amount: 500.00,
       frequency: 'monthly',
       next_date: formatOffset(15),
       payee: 'Monthly Emergency Fund Savings',
@@ -156,7 +157,7 @@ export async function seedDemoData(force: boolean = false): Promise<{ success: b
       id: 7,
       account_id: 1,
       category_id: 10,
-      amount: -65.00,
+      amount: 65.00,
       frequency: 'monthly',
       next_date: formatOffset(18),
       payee: 'Equinox Fitness Club',
@@ -167,7 +168,7 @@ export async function seedDemoData(force: boolean = false): Promise<{ success: b
       id: 8,
       account_id: 3,
       category_id: 9,
-      amount: -120.00,
+      amount: 120.00,
       frequency: 'monthly',
       next_date: formatOffset(9),
       payee: 'Metro Transit Pass',
@@ -270,6 +271,8 @@ export async function resetToCleanSlate(initialAccount?: {
   }
 
   // Clear existing data
+  await db.execute('DELETE FROM transaction_splits');
+  await db.execute('DELETE FROM transaction_attachments');
   await db.execute('DELETE FROM transactions');
   await db.execute('DELETE FROM scheduled_transaction_overrides');
   await db.execute('DELETE FROM scheduled_transactions');
@@ -308,7 +311,7 @@ export async function resetToCleanSlate(initialAccount?: {
 
     // If starting balance is not 0, insert opening balance transaction
     if (balance !== 0) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalTodayStr(0);
       const isIncome = balance > 0;
       const catId = isIncome ? 1 : 14; // 1 = Salary, 14 = General
       await db.execute(

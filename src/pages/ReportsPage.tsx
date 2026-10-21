@@ -38,7 +38,7 @@ import {
 import { getDb } from '../utils/db';
 import { Account, Category } from '../types';
 import { generateReportPDF } from '../utils/pdfGenerator';
-import { useRegionalSettings } from '../utils/currency';
+import { useRegionalSettings, isTransferPayee, getLocalTodayStr, toLocalDateStr } from '../utils/currency';
 import ReceiptModal from '../components/ReceiptModal';
 
 interface RawTx {
@@ -171,11 +171,10 @@ const ReportsPage = ({ proStatus = false, onTriggerUpgrade }: ReportsPageProps) 
       } else if (timeRange === 'last_month') {
         const dStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const dEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-        startStr = dStart.toISOString().split('T')[0];
-        endStr = dEnd.toISOString().split('T')[0];
+        startStr = toLocalDateStr(dStart);
+        endStr = toLocalDateStr(dEnd);
       } else if (timeRange === 'last_90_days') {
-        const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        startStr = ninetyDaysAgo.toISOString().split('T')[0];
+        startStr = getLocalTodayStr(-90);
       } else if (timeRange === 'this_year') {
         startStr = `${now.getFullYear()}-01-01`;
       } else if (timeRange === 'custom') {
@@ -200,8 +199,7 @@ const ReportsPage = ({ proStatus = false, onTriggerUpgrade }: ReportsPageProps) 
       const monthlyMap: { [monthKey: string]: { income: number; expense: number } } = {};
 
       for (const tx of filtered) {
-        const isTransfer = tx.payee.startsWith('Transfer to ') || tx.payee.startsWith('Transfer from ');
-        if (isTransfer) continue;
+        if (isTransferPayee(tx.payee)) continue;
 
         if (tx.amount > 0) {
           incomeSum += tx.amount;
@@ -605,7 +603,7 @@ const ReportsPage = ({ proStatus = false, onTriggerUpgrade }: ReportsPageProps) 
     const spendingMap: { [catId: number]: number } = {};
 
     for (const tx of filteredTxs) {
-      if (tx.amount < 0 && !tx.payee.startsWith('Transfer to ') && !tx.payee.startsWith('Transfer from ')) {
+      if (tx.amount < 0 && !isTransferPayee(tx.payee)) {
         spendingMap[tx.category_id] = (spendingMap[tx.category_id] || 0) + Math.abs(tx.amount);
       }
     }
@@ -663,7 +661,7 @@ const ReportsPage = ({ proStatus = false, onTriggerUpgrade }: ReportsPageProps) 
     let rolling = currentTotal;
 
     // Last point is today with currentTotal
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalTodayStr(0);
     pointList.unshift({ date: todayStr, balance: Math.round(rolling) });
 
     for (let i = sortedDates.length - 1; i >= 0; i--) {
@@ -692,7 +690,7 @@ const ReportsPage = ({ proStatus = false, onTriggerUpgrade }: ReportsPageProps) 
     const catMap: { [catName: string]: { type: string; total: number } } = {};
 
     for (const tx of filteredTxs) {
-      if (tx.payee.startsWith('Transfer to ') || tx.payee.startsWith('Transfer from ')) continue;
+      if (isTransferPayee(tx.payee)) continue;
       const name = tx.category_name || 'General';
       const isInc = tx.amount > 0;
       if (!catMap[name]) {

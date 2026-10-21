@@ -9,6 +9,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { getDb } from './db';
 import { Account, Category, Transaction, ScheduledTransaction, TransactionRule } from '../types';
+import { getLocalTodayStr } from './currency';
 
 export interface DeviceInfo {
   id: string;
@@ -237,9 +238,19 @@ export async function mergeSyncBundle(remotePayload: SyncPayload): Promise<Merge
   let addedRules = 0;
 
   try {
-    // 1. Merge Accounts
+    // 1. Merge Accounts & capture base opening balances before transaction merge
     const localAccounts = (await db.select('SELECT * FROM accounts')) as Account[];
+    const localTransactionsBefore = (await db.select('SELECT * FROM transactions')) as Transaction[];
     const accountMap = new Map<number, number>(); // remoteId -> localId
+    const baseBalanceByLocalAccId = new Map<number, number>();
+
+    // For all existing local accounts, base balance = current balance - current sum of local transactions
+    for (const locAcc of localAccounts) {
+      const txSum = localTransactionsBefore
+        .filter((t) => t.account_id === locAcc.id)
+        .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+      baseBalanceByLocalAccId.set(locAcc.id, Number(locAcc.balance || 0) - txSum);
+    }
 
     for (const remAcc of remotePayload.accounts || []) {
       const match = localAccounts.find(
@@ -257,6 +268,13 @@ export async function mergeSyncBundle(remotePayload: SyncPayload): Promise<Merge
         );
         const newId = Number(res.lastInsertId) || remAcc.id;
         accountMap.set(remAcc.id, newId);
+
+        // Compute base opening balance of this newly synced remote account
+        const remTxSum = (remotePayload.transactions || [])
+          .filter((t) => t.account_id === remAcc.id)
+          .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+        baseBalanceByLocalAccId.set(newId, Number(remAcc.balance || 0) - remTxSum);
+
         addedAccounts++;
       }
     }
@@ -285,21 +303,27 @@ export async function mergeSyncBundle(remotePayload: SyncPayload): Promise<Merge
       }
     }
 
-    // 3. Merge Transactions
-    const localTransactions = (await db.select('SELECT * FROM transactions')) as Transaction[];
+    // 3. Merge Transactions (supporting multiple identical same-day transactions via occurrence index)
+    const localTransactions = localTransactionsBefore;
 
     const localTxSet = new Map<string, Transaction>();
+    const localFpCounts = new Map<string, number>();
     localTransactions.forEach((tx) => {
-      const fp = `${tx.date}|${tx.payee.trim().toLowerCase()}|${Number(tx.amount).toFixed(2)}|${tx.account_id}`;
-      localTxSet.set(fp, tx);
+      const baseFp = `${tx.date}|${tx.payee.trim().toLowerCase()}|${Number(tx.amount).toFixed(2)}|${tx.account_id}`;
+      const occIdx = localFpCounts.get(baseFp) || 0;
+      localFpCounts.set(baseFp, occIdx + 1);
+      localTxSet.set(`${baseFp}#${occIdx}`, tx);
     });
 
+    const remoteFpCounts = new Map<string, number>();
     for (const remTx of remotePayload.transactions || []) {
       const mappedAccId = accountMap.get(remTx.account_id) || remTx.account_id;
       const mappedCatId = categoryMap.get(remTx.category_id) || remTx.category_id;
-      const fp = `${remTx.date}|${remTx.payee.trim().toLowerCase()}|${Number(remTx.amount).toFixed(2)}|${mappedAccId}`;
+      const baseFp = `${remTx.date}|${remTx.payee.trim().toLowerCase()}|${Number(remTx.amount).toFixed(2)}|${mappedAccId}`;
+      const occIdx = remoteFpCounts.get(baseFp) || 0;
+      remoteFpCounts.set(baseFp, occIdx + 1);
 
-      const existing = localTxSet.get(fp);
+      const existing = localTxSet.get(`${baseFp}#${occIdx}`);
 
       if (existing) {
         const rank = (s?: string) => (s === 'reconciled' ? 3 : s === 'cleared' ? 2 : 1);
@@ -321,6 +345,42 @@ export async function mergeSyncBundle(remotePayload: SyncPayload): Promise<Merge
           ]
         );
         addedTransactions++;
+      }
+    }
+
+    // 3b. Merge Scheduled Transactions
+    if (remotePayload.scheduledTransactions && remotePayload.scheduledTransactions.length > 0) {
+      try {
+        const localScheduled = (await db.select('SELECT * FROM scheduled_transactions')) as ScheduledTransaction[];
+        for (const remSt of remotePayload.scheduledTransactions) {
+          const mappedAccId = accountMap.get(remSt.account_id) || remSt.account_id;
+          const mappedCatId = categoryMap.get(remSt.category_id) || remSt.category_id;
+          const mappedToAccId = remSt.to_account_id ? accountMap.get(remSt.to_account_id) || remSt.to_account_id : null;
+          const match = localScheduled.find(
+            (ls) =>
+              (ls.payee || '').trim().toLowerCase() === (remSt.payee || '').trim().toLowerCase() &&
+              Math.abs(ls.amount) === Math.abs(remSt.amount) &&
+              ls.frequency === remSt.frequency &&
+              ls.account_id === mappedAccId
+          );
+          if (!match) {
+            await db.execute(
+              'INSERT INTO scheduled_transactions (account_id, category_id, amount, frequency, next_date, payee, type, to_account_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+              [
+                mappedAccId,
+                mappedCatId,
+                Math.abs(remSt.amount),
+                remSt.frequency || 'monthly',
+                remSt.next_date,
+                remSt.payee || 'Scheduled',
+                remSt.type || 'expense',
+                mappedToAccId,
+              ]
+            );
+          }
+        }
+      } catch {
+        // Ignore if table unavailable
       }
     }
 
@@ -359,14 +419,16 @@ export async function mergeSyncBundle(remotePayload: SyncPayload): Promise<Merge
       }
     }
 
-    // 5. Recalculate Account Balances based on actual transaction totals
+    // 5. Recalculate Account Balances preserving each account's base/opening balance + transaction totals
     const allAccounts = (await db.select('SELECT id FROM accounts')) as { id: number }[];
     for (const acc of allAccounts) {
       const sumResult = (await db.select(
         'SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE account_id = ?',
         [acc.id]
       )) as { total: number }[];
-      const computedBal = sumResult[0]?.total || 0;
+      const txSum = sumResult[0]?.total || 0;
+      const baseBal = baseBalanceByLocalAccId.get(acc.id) ?? 0;
+      const computedBal = Math.round((baseBal + txSum) * 100) / 100;
       await db.execute('UPDATE accounts SET balance = ? WHERE id = ?', [computedBal, acc.id]);
     }
 
@@ -588,7 +650,7 @@ export async function simulateMobileSync(): Promise<MergeResult> {
   const cat1 = categories[0] || { id: 1, name: 'Food & Dining', type: 'expense' };
   const cat2 = categories[1] || { id: 2, name: 'Groceries', type: 'expense' };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalTodayStr(0);
 
   const simulatedPayload: SyncPayload = {
     version: 1,
@@ -637,7 +699,7 @@ export async function exportSyncFile(): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `rMoney_Sync_${new Date().toISOString().split('T')[0]}.rmsync`;
+  a.download = `rMoney_Sync_${getLocalTodayStr(0)}.rmsync`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

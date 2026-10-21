@@ -150,7 +150,7 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
   const [scenarioStatement, setScenarioStatement] = useState<'spend_date' | 'receive_date' | 'transfer_date'>('spend_date');
   const [scenarioPayee, setScenarioPayee] = useState('');
   const [scenarioAmount, setScenarioAmount] = useState('100.00');
-  const [scenarioDate, setScenarioDate] = useState(new Date().toISOString().split('T')[0]);
+  const [scenarioDate, setScenarioDate] = useState(() => toISODateString(new Date()));
   const [scenarioFrequency, setScenarioFrequency] = useState<string>('once');
 
   // Summary Metrics
@@ -201,12 +201,13 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
 
       // Pre-calculate occurrences within horizon, taking rescheduled dates into account
       const occurrenceMap = new Map<string, ScheduledOccurrence[]>();
-      bills.forEach((bill) => {
+      bills.forEach((pBill) => {
+        const bill = { ...pBill, amount: Math.abs(pBill.amount) };
         let curDateStr = bill.next_date;
         if (bill.frequency === 'once') {
           const ov = overrideMap.get(`${bill.id}_${curDateStr}`);
           const effectiveDate = ov?.new_date && ov.new_date.trim() ? ov.new_date.trim() : curDateStr;
-          const effectiveAmount = ov?.amount !== undefined && ov?.amount !== null ? ov.amount : bill.amount;
+          const effectiveAmount = ov?.amount !== undefined && ov?.amount !== null ? Math.abs(ov.amount) : bill.amount;
           const effectivePayee =
             ov?.payee !== undefined && ov?.payee !== null && ov.payee.trim()
               ? ov.payee
@@ -231,7 +232,7 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
           while (curDateStr <= endDateStr) {
             const ov = overrideMap.get(`${bill.id}_${curDateStr}`);
             const effectiveDate = ov?.new_date && ov.new_date.trim() ? ov.new_date.trim() : curDateStr;
-            const effectiveAmount = ov?.amount !== undefined && ov?.amount !== null ? ov.amount : bill.amount;
+            const effectiveAmount = ov?.amount !== undefined && ov?.amount !== null ? Math.abs(ov.amount) : bill.amount;
             const effectivePayee =
               ov?.payee !== undefined && ov?.payee !== null && ov.payee.trim()
                 ? ov.payee

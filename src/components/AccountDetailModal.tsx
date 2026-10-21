@@ -20,7 +20,7 @@ import {
 } from 'recharts';
 import { Account, Transaction } from '../types';
 import { getDb } from '../utils/db';
-import { useRegionalSettings } from '../utils/currency';
+import { useRegionalSettings, getLocalTodayStr, toLocalDateStr } from '../utils/currency';
 
 interface AccountDetailModalProps {
   account: Account | null;
@@ -117,7 +117,7 @@ export const AccountDetailModal: React.FC<AccountDetailModalProps> = ({
     else if (timeframe === '1y') cutoffDate.setFullYear(now.getFullYear() - 1);
     else cutoffDate.setFullYear(1970);
 
-    const cutoffStr = cutoffDate.toISOString().split('T')[0];
+    const cutoffStr = toLocalDateStr(cutoffDate);
 
     // Filter points and transactions within timeframe
     const sortedDates = Object.keys(pointsByDate).sort();
@@ -136,7 +136,7 @@ export const AccountDetailModal: React.FC<AccountDetailModalProps> = ({
 
     if (filteredPoints.length === 0) {
       filteredPoints.push({
-        date: new Date().toISOString().split('T')[0],
+        date: getLocalTodayStr(0),
         balance: account.balance,
         dailyChange: 0,
       });
