@@ -215,61 +215,61 @@ export const AccountDetailModal: React.FC<AccountDetailModalProps> = ({
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Key KPI Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Current Ledger Balance
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+            <div className="bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 truncate block">
+                Current Balance
               </span>
               <div
-                className={`text-2xl font-extrabold font-mono mt-1 ${
+                className={`text-lg sm:text-2xl font-extrabold font-mono mt-0.5 sm:mt-1 truncate ${
                   account.balance < 0 ? 'text-rose-600' : 'text-slate-900'
                 }`}
               >
                 {formatCurrency(account.balance)}
               </div>
-              <span className="text-[11px] text-slate-400 mt-0.5 block">
-                {transactions.length} total ledger entries
+              <span className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 block truncate">
+                {transactions.length} entries
               </span>
             </div>
 
-            <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200/70">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1">
-                <CheckCircle2 size={13} />
-                Cleared Liquidity
+            <div className="bg-emerald-50/60 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-emerald-200/70">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1 truncate">
+                <CheckCircle2 size={12} className="shrink-0" />
+                Cleared
               </span>
-              <div className="text-2xl font-extrabold text-emerald-700 font-mono mt-1">
+              <div className="text-lg sm:text-2xl font-extrabold text-emerald-700 font-mono mt-0.5 sm:mt-1 truncate">
                 {formatCurrency(clearedBalance)}
               </div>
-              <span className="text-[11px] text-emerald-600 mt-0.5 block">
-                Reconciled with bank statements
+              <span className="text-[10px] sm:text-[11px] text-emerald-600 mt-0.5 block truncate">
+                Reconciled
               </span>
             </div>
 
-            <div className="bg-amber-50/60 p-4 rounded-2xl border border-amber-200/70">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1">
-                <Clock size={13} />
-                Pending / Uncleared
+            <div className="bg-amber-50/60 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-amber-200/70">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1 truncate">
+                <Clock size={12} className="shrink-0" />
+                Uncleared
               </span>
-              <div className="text-2xl font-extrabold text-amber-700 font-mono mt-1">
+              <div className="text-lg sm:text-2xl font-extrabold text-amber-700 font-mono mt-0.5 sm:mt-1 truncate">
                 {formatCurrency(unclearedBalance)}
               </div>
-              <span className="text-[11px] text-amber-600 mt-0.5 block">
-                Outstanding checks & deposits
+              <span className="text-[10px] sm:text-[11px] text-amber-600 mt-0.5 block truncate">
+                Pending
               </span>
             </div>
 
-            <div className="bg-blue-50/60 p-4 rounded-2xl border border-blue-200/70">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-800">
-                Net Trajectory ({timeframe.toUpperCase()})
+            <div className="bg-blue-50/60 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-blue-200/70">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-blue-800 truncate block">
+                Net ({timeframe.toUpperCase()})
               </span>
               <div
-                className={`text-2xl font-extrabold font-mono mt-1 ${
+                className={`text-lg sm:text-2xl font-extrabold font-mono mt-0.5 sm:mt-1 truncate ${
                   timeframeStats.netChange >= 0 ? 'text-blue-700' : 'text-rose-600'
                 }`}
               >
                 {formatCurrency(timeframeStats.netChange, { showSign: true })}
               </div>
-              <span className="text-[11px] text-blue-600 mt-0.5 block">
+              <span className="text-[10px] sm:text-[11px] text-blue-600 mt-0.5 block truncate">
                 +{formatCurrency(timeframeStats.inflow)} / -{formatCurrency(timeframeStats.outflow)}
               </span>
             </div>
@@ -365,7 +365,52 @@ export const AccountDetailModal: React.FC<AccountDetailModalProps> = ({
               )}
             </div>
 
-            <div className="overflow-x-auto border border-slate-200 rounded-xl">
+            {/* Mobile Feed */}
+            <div className="sm:hidden divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+              {recentTxs.length === 0 ? (
+                <div className="py-6 text-center text-slate-400 font-medium text-xs">
+                  No transactions recorded for this account.
+                </div>
+              ) : (
+                recentTxs.map((tx) => (
+                  <div key={tx.id} className="p-3 bg-white space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-slate-800 truncate flex items-center gap-1">
+                        {tx.payee}
+                        {Boolean(tx.attachment_count && tx.attachment_count > 0) && (
+                          <Paperclip size={11} className="text-indigo-500 shrink-0" />
+                        )}
+                      </span>
+                      <span
+                        className={`font-mono font-bold shrink-0 ${
+                          tx.amount < 0 ? 'text-slate-800' : 'text-emerald-600'
+                        }`}
+                      >
+                        {tx.amount > 0 ? '+' : ''}
+                        {formatCurrency(tx.amount)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                      <span>{tx.date} • {tx.category_name || 'Uncategorized'}</span>
+                      <span
+                        className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider ${
+                          tx.status === 'reconciled'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : tx.status === 'cleared'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {tx.status || 'uncleared'}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto border border-slate-200 rounded-xl">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
                   <tr>

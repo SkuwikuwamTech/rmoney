@@ -479,13 +479,13 @@ const BillsPage = () => {
 
   return (
     <div className="flex-1 min-h-0 flex flex-col space-y-8">
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">Scheduled Transactions</h1>
-          <p className="text-slate-500">Manage recurring bills, paychecks, and scheduled transfers</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Scheduled Transactions</h1>
+          <p className="text-slate-500 text-xs sm:text-sm">Manage recurring bills, paychecks, and scheduled transfers</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 border border-slate-300/60 shadow-2xs">
             <button
               onClick={() => setViewMode('list')}
@@ -517,7 +517,7 @@ const BillsPage = () => {
                 setIsAdding(true);
                 setEditingBill(null);
               }}
-              className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors font-semibold flex items-center gap-1.5 shadow-sm text-xs cursor-pointer"
+              className="bg-blue-600 text-white px-3.5 sm:px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors font-semibold flex items-center gap-1.5 shadow-sm text-xs cursor-pointer"
             >
               <Plus size={16} />
               <span>Schedule New</span>
@@ -1182,163 +1182,301 @@ const BillsPage = () => {
           </div>
         </div>
       ) : (
-        /* Bills Table */
-        <div className="flex-1 min-h-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider shadow-xs">
-              <tr className="divide-x divide-slate-200">
-                <th className="px-6 py-4 font-semibold">Payee / Description</th>
-                <th className="px-6 py-4 font-semibold">Account</th>
-                <th className="px-6 py-4 font-semibold">Category</th>
-                <th className="px-6 py-4 font-semibold">Frequency</th>
-                <th className="px-6 py-4 font-semibold">Next Due</th>
-                <th className="px-6 py-4 font-semibold text-right">Amount</th>
-                <th className="px-6 py-4 font-semibold text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-sm">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic">
-                    Loading scheduled transactions...
-                  </td>
-                </tr>
-              ) : bills.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic">
-                    <div className="flex flex-col items-center gap-2">
-                      <AlertCircle size={32} className="text-slate-300" />
-                      <p>No scheduled transactions found. Start by scheduling a recurring bill or income!</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                bills.map((bill) => (
-                  <tr key={bill.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-800">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span>{bill.effective_payee || bill.payee || 'Unnamed'}</span>
-                        {bill.is_instance_overridden && (
+        /* Bills List: Desktop Table + Mobile Cards Feed */
+        <div className="flex-1 min-h-0 flex flex-col gap-4">
+          {/* Mobile Scheduled Transactions Feed (Phones / Small Tablets) */}
+          <div className="md:hidden flex flex-col gap-3">
+            {loading ? (
+              <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-400 text-sm">
+                Loading scheduled transactions...
+              </div>
+            ) : bills.length === 0 ? (
+              <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-400 space-y-2">
+                <AlertCircle size={32} className="mx-auto text-slate-300" />
+                <p className="font-semibold text-sm">No scheduled transactions found</p>
+                <p className="text-xs">Start by scheduling a recurring bill or income above.</p>
+              </div>
+            ) : (
+              bills.map((bill) => {
+                const effAmt = bill.effective_amount ?? bill.amount;
+                const isIncome = bill.type === 'income';
+                const isTransfer = bill.type === 'transfer';
+                return (
+                  <div
+                    key={bill.id}
+                    className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3"
+                  >
+                    {/* Top Row: Payee & Amount */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-slate-900 text-sm truncate">
+                            {bill.effective_payee || bill.payee || 'Unnamed'}
+                          </span>
+                          {bill.is_instance_overridden && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 flex items-center gap-0.5">
+                              <Sparkles size={9} />
+                              Custom
+                            </span>
+                          )}
                           <span
-                            className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 flex items-center gap-0.5"
-                            title="The upcoming occurrence has custom edits"
+                            className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                              isIncome
+                                ? 'bg-green-100 text-green-700'
+                                : isTransfer
+                                ? 'bg-purple-100 text-purple-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
                           >
-                            <Sparkles size={10} />
-                            Custom Instance
+                            {bill.type}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {isTransfer ? (
+                            <span className="flex items-center gap-1">
+                              <span>{bill.account_name}</span>
+                              <ArrowRightLeft size={10} className="text-slate-400" />
+                              <span>{bill.to_account_name || 'Account'}</span>
+                            </span>
+                          ) : (
+                            <span>{bill.account_name || 'Account'} • {bill.category_name || 'General'}</span>
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <span className={`text-base font-black tabular-nums font-mono ${
+                          isIncome ? 'text-green-600' : 'text-red-500'
+                        }`}>
+                          {isIncome ? `+${formatCurrency(effAmt)}` : `-${formatCurrency(effAmt)}`}
+                        </span>
+                        {bill.is_instance_overridden && (
+                          <div className="text-[10px] text-slate-400">
+                            Reg: {formatCurrency(bill.amount)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Middle Row: Schedule frequency & Due date */}
+                    <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={13} className={bill.effective_date && bill.effective_date !== bill.next_date ? 'text-blue-500' : 'text-slate-400'} />
+                        <span className="font-semibold text-slate-800">
+                          {formatDate(bill.effective_date || bill.next_date)}
+                        </span>
+                        {bill.effective_date && bill.effective_date !== bill.next_date && (
+                          <span className="text-[10px] text-blue-600 font-medium">
+                            (was {formatDate(bill.next_date)})
                           </span>
                         )}
                       </div>
-                      <span
-                        className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
-                          bill.type === 'income'
-                            ? 'bg-green-100 text-green-700'
-                            : bill.type === 'transfer'
-                            ? 'bg-purple-100 text-purple-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}
+                      <span className="capitalize font-semibold text-slate-500 text-[11px]">
+                        {bill.frequency === 'once' ? 'One-Time' : bill.frequency}
+                      </span>
+                    </div>
+
+                    {/* Bottom Row: Actions */}
+                    <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => openPostModal(bill)}
+                        className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors"
                       >
-                        {bill.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-600">
-                      {bill.type === 'transfer' ? (
-                        <span className="flex items-center gap-1.5">
-                          <span>{bill.account_name}</span>
-                          <ArrowRightLeft size={12} className="text-slate-400" />
-                          <span>{bill.to_account_name || 'Account'}</span>
-                        </span>
-                      ) : (
-                        bill.account_name || 'Account'
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-slate-600">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-                        {bill.category_name || 'General'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-500 capitalize">
-                      {bill.frequency === 'once' ? (
-                        <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                          One-Time
-                        </span>
-                      ) : (
-                        bill.frequency
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-slate-600 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 font-medium text-slate-800">
-                        <Clock
-                          size={14}
-                          className={
-                            bill.effective_date && bill.effective_date !== bill.next_date
-                              ? 'text-blue-500'
-                              : 'text-slate-400'
-                          }
-                        />
-                        <span>{formatDate(bill.effective_date || bill.next_date)}</span>
-                      </div>
-                      {bill.effective_date && bill.effective_date !== bill.next_date && (
-                        <div className="text-[10px] text-blue-600 font-medium mt-0.5">
-                          (was {formatDate(bill.next_date)})
-                        </div>
-                      )}
-                    </td>
-                    <td
-                      className={`px-6 py-4 font-bold text-right tabular-nums ${
-                        bill.type === 'income' ? 'text-green-600' : 'text-red-500'
-                      }`}
-                    >
-                      <div>
-                        {bill.type === 'income'
-                          ? `+${formatCurrency(bill.effective_amount ?? bill.amount)}`
-                          : `-${formatCurrency(bill.effective_amount ?? bill.amount)}`}
-                      </div>
+                        <CheckCircle2 size={13} />
+                        <span>Post Now</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => startEditBill(bill)}
+                        className="p-1.5 text-slate-500 hover:text-blue-600 rounded-xl hover:bg-slate-100 border border-slate-200 transition-colors"
+                        title="Edit recurring series or upcoming instance"
+                      >
+                        <Edit2 size={13} />
+                      </button>
                       {bill.is_instance_overridden && (
-                        <div className="text-[11px] font-normal text-slate-400">
-                          Regular: {formatCurrency(bill.amount)}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleResetInstanceOverride(bill)}
+                          className="p-1.5 text-slate-500 hover:text-amber-600 rounded-xl hover:bg-amber-50 border border-slate-200 transition-colors"
+                          title="Reset upcoming instance"
+                        >
+                          <RotateCcw size={13} />
+                        </button>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => deleteBill(bill.id)}
+                        className="p-1.5 text-slate-500 hover:text-red-500 rounded-xl hover:bg-red-50 border border-slate-200 transition-colors"
+                        title="Delete Scheduled Bill Series"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop Bills Table */}
+          <div className="hidden md:block flex-1 min-h-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider shadow-xs">
+                <tr className="divide-x divide-slate-200">
+                  <th className="px-6 py-4 font-semibold">Payee / Description</th>
+                  <th className="px-6 py-4 font-semibold">Account</th>
+                  <th className="px-6 py-4 font-semibold">Category</th>
+                  <th className="px-6 py-4 font-semibold">Frequency</th>
+                  <th className="px-6 py-4 font-semibold">Next Due</th>
+                  <th className="px-6 py-4 font-semibold text-right">Amount</th>
+                  <th className="px-6 py-4 font-semibold text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm">
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic">
+                      Loading scheduled transactions...
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => openPostModal(bill)}
-                          className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors"
-                          title="Review and record payment into Ledger"
-                        >
-                          <CheckCircle2 size={14} />
-                          Post Now
-                        </button>
-                        <button
-                          onClick={() => startEditBill(bill)}
-                          className="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100 transition-colors"
-                          title="Edit date, amount, or recurring series"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        {bill.is_instance_overridden && (
-                          <button
-                            onClick={() => handleResetInstanceOverride(bill)}
-                            className="p-1.5 text-slate-400 hover:text-amber-600 rounded-lg hover:bg-amber-50 transition-colors"
-                            title="Reset upcoming instance back to series schedule & amount"
-                          >
-                            <RotateCcw size={16} />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => deleteBill(bill.id)}
-                          className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
-                          title="Delete Scheduled Bill Series"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                  </tr>
+                ) : bills.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic">
+                      <div className="flex flex-col items-center gap-2">
+                        <AlertCircle size={32} className="text-slate-300" />
+                        <p>No scheduled transactions found. Start by scheduling a recurring bill or income!</p>
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  bills.map((bill) => (
+                    <tr key={bill.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-slate-800">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span>{bill.effective_payee || bill.payee || 'Unnamed'}</span>
+                          {bill.is_instance_overridden && (
+                            <span
+                              className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 flex items-center gap-0.5"
+                              title="The upcoming occurrence has custom edits"
+                            >
+                              <Sparkles size={10} />
+                              Custom Instance
+                            </span>
+                          )}
+                        </div>
+                        <span
+                          className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
+                            bill.type === 'income'
+                              ? 'bg-green-100 text-green-700'
+                              : bill.type === 'transfer'
+                              ? 'bg-purple-100 text-purple-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}
+                        >
+                          {bill.type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {bill.type === 'transfer' ? (
+                          <span className="flex items-center gap-1.5">
+                            <span>{bill.account_name}</span>
+                            <ArrowRightLeft size={12} className="text-slate-400" />
+                            <span>{bill.to_account_name || 'Account'}</span>
+                          </span>
+                        ) : (
+                          bill.account_name || 'Account'
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                          {bill.category_name || 'General'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-slate-500 capitalize">
+                        {bill.frequency === 'once' ? (
+                          <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                            One-Time
+                          </span>
+                        ) : (
+                          bill.frequency
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-slate-600 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 font-medium text-slate-800">
+                          <Clock
+                            size={14}
+                            className={
+                              bill.effective_date && bill.effective_date !== bill.next_date
+                                ? 'text-blue-500'
+                                : 'text-slate-400'
+                            }
+                          />
+                          <span>{formatDate(bill.effective_date || bill.next_date)}</span>
+                        </div>
+                        {bill.effective_date && bill.effective_date !== bill.next_date && (
+                          <div className="text-[10px] text-blue-600 font-medium mt-0.5">
+                            (was {formatDate(bill.next_date)})
+                          </div>
+                        )}
+                      </td>
+                      <td
+                        className={`px-6 py-4 font-bold text-right tabular-nums ${
+                          bill.type === 'income' ? 'text-green-600' : 'text-red-500'
+                        }`}
+                      >
+                        <div>
+                          {bill.type === 'income'
+                            ? `+${formatCurrency(bill.effective_amount ?? bill.amount)}`
+                            : `-${formatCurrency(bill.effective_amount ?? bill.amount)}`}
+                        </div>
+                        {bill.is_instance_overridden && (
+                          <div className="text-[11px] font-normal text-slate-400">
+                            Regular: {formatCurrency(bill.amount)}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => openPostModal(bill)}
+                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors"
+                            title="Review and record payment into Ledger"
+                          >
+                            <CheckCircle2 size={14} />
+                            Post Now
+                          </button>
+                          <button
+                            onClick={() => startEditBill(bill)}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100 transition-colors"
+                            title="Edit date, amount, or recurring series"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          {bill.is_instance_overridden && (
+                            <button
+                              onClick={() => handleResetInstanceOverride(bill)}
+                              className="p-1.5 text-slate-400 hover:text-amber-600 rounded-lg hover:bg-amber-50 transition-colors"
+                              title="Reset upcoming instance back to series schedule & amount"
+                            >
+                              <RotateCcw size={16} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => deleteBill(bill.id)}
+                            className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                            title="Delete Scheduled Bill Series"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

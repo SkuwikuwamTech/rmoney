@@ -1343,7 +1343,7 @@ const ReportsPage = ({ proStatus = false, onTriggerUpgrade }: ReportsPageProps) 
         </div>
 
         {/* Action Buttons: PDF, Print & Export */}
-        <div className="flex items-center gap-2 no-print">
+        <div className="flex flex-wrap items-center gap-2 no-print">
           <button
             onClick={handleDownloadPDF}
             disabled={isGeneratingPdf}
@@ -1618,65 +1618,65 @@ const ReportsPage = ({ proStatus = false, onTriggerUpgrade }: ReportsPageProps) 
       {!loading && activeTab === 'overview' && (
         <div className="space-y-8 animate-in fade-in duration-150">
           {/* KPI Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
               <div className="flex items-center justify-between text-slate-400">
-                <span className="text-xs font-bold uppercase tracking-wider">Total Income</span>
-                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
-                  <ArrowUpRight size={18} />
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">Total Income</span>
+                <div className="p-1.5 sm:p-2 bg-emerald-50 text-emerald-600 rounded-lg sm:rounded-xl shrink-0">
+                  <ArrowUpRight size={16} className="sm:w-[18px] sm:h-[18px]" />
                 </div>
               </div>
-              <p className="text-2xl font-black text-slate-900 tabular-nums">
+              <p className="text-lg sm:text-2xl font-black text-slate-900 tabular-nums truncate">
                 {formatCurrency(totalIncome)}
               </p>
-              <p className="text-[11px] text-slate-400">Deposits & earnings</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">Deposits & earnings</p>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
               <div className="flex items-center justify-between text-slate-400">
-                <span className="text-xs font-bold uppercase tracking-wider">Total Spending</span>
-                <div className="p-2 bg-red-50 text-red-600 rounded-xl">
-                  <ArrowDownRight size={18} />
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">Total Spending</span>
+                <div className="p-1.5 sm:p-2 bg-red-50 text-red-600 rounded-lg sm:rounded-xl shrink-0">
+                  <ArrowDownRight size={16} className="sm:w-[18px] sm:h-[18px]" />
                 </div>
               </div>
-              <p className="text-2xl font-black text-slate-900 tabular-nums">
+              <p className="text-lg sm:text-2xl font-black text-slate-900 tabular-nums truncate">
                 {formatCurrency(totalExpense)}
               </p>
-              <p className="text-[11px] text-slate-400">Total outflows (excl. transfers)</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">Total outflows</p>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
               <div className="flex items-center justify-between text-slate-400">
-                <span className="text-xs font-bold uppercase tracking-wider">Net Savings</span>
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">Net Savings</span>
                 <div
-                  className={`p-2 rounded-xl ${
+                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl shrink-0 ${
                     netSavings >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
                   }`}
                 >
-                  {netSavings >= 0 ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
+                  {netSavings >= 0 ? <TrendingUp size={16} className="sm:w-[18px] sm:h-[18px]" /> : <TrendingDown size={16} className="sm:w-[18px] sm:h-[18px]" />}
                 </div>
               </div>
               <p
-                className={`text-2xl font-black tabular-nums ${
+                className={`text-lg sm:text-2xl font-black tabular-nums truncate ${
                   netSavings >= 0 ? 'text-emerald-600' : 'text-red-600'
                 }`}
               >
                 {netSavings < 0 ? '-' : '+'}{formatCurrency(Math.abs(netSavings))}
               </p>
-              <p className="text-[11px] text-slate-400">Income minus expenses</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">Net cash flow</p>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
               <div className="flex items-center justify-between text-slate-400">
-                <span className="text-xs font-bold uppercase tracking-wider">Savings Rate</span>
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-                  <Percent size={18} />
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">Savings Rate</span>
+                <div className="p-1.5 sm:p-2 bg-indigo-50 text-indigo-600 rounded-lg sm:rounded-xl shrink-0">
+                  <Percent size={16} className="sm:w-[18px] sm:h-[18px]" />
                 </div>
               </div>
-              <p className="text-2xl font-black text-slate-900 tabular-nums">
+              <p className="text-lg sm:text-2xl font-black text-slate-900 tabular-nums truncate">
                 {savingsRate.toFixed(1)}%
               </p>
-              <p className="text-[11px] text-slate-400">Portion of earnings retained</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">Earnings retained</p>
             </div>
           </div>
 

@@ -771,51 +771,51 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
       )}
 
       {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-            <Wallet size={20} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className="p-2 sm:p-3 bg-blue-50 text-blue-600 rounded-xl shrink-0">
+            <Wallet size={18} className="sm:w-5 sm:h-5" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase">Current Balance</p>
-            <p className="text-xl font-bold text-slate-900">
+          <div className="min-w-0">
+            <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase truncate">Current Balance</p>
+            <p className="text-lg sm:text-xl font-bold text-slate-900 tabular-nums truncate">
               {formatCurrency(metrics.startBalance)}
             </p>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className={`p-3 rounded-xl ${metrics.netChange >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-            {metrics.netChange >= 0 ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className={`p-2 sm:p-3 rounded-xl shrink-0 ${metrics.netChange >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+            {metrics.netChange >= 0 ? <TrendingUp size={18} className="sm:w-5 sm:h-5" /> : <TrendingDown size={18} className="sm:w-5 sm:h-5" />}
           </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase">Projected Net Flow</p>
-            <p className={`text-xl font-bold ${metrics.netChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className="min-w-0">
+            <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase truncate">Net Flow</p>
+            <p className={`text-lg sm:text-xl font-bold tabular-nums truncate ${metrics.netChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {metrics.netChange >= 0 ? '+' : ''}{formatCurrency(metrics.netChange)}
             </p>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className={`p-3 rounded-xl ${metrics.lowestBalance < 0 ? 'bg-red-100 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
-            <ShieldAlert size={20} />
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className={`p-2 sm:p-3 rounded-xl shrink-0 ${metrics.lowestBalance < 0 ? 'bg-red-100 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
+            <ShieldAlert size={18} className="sm:w-5 sm:h-5" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase">Lowest Balance</p>
-            <p className={`text-xl font-bold ${metrics.lowestBalance < 0 ? 'text-red-600' : 'text-slate-900'}`}>
+          <div className="min-w-0">
+            <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase truncate">Lowest Balance</p>
+            <p className={`text-lg sm:text-xl font-bold tabular-nums truncate ${metrics.lowestBalance < 0 ? 'text-red-600' : 'text-slate-900'}`}>
               {formatCurrency(metrics.lowestBalance)}
             </p>
-            <p className="text-xs text-slate-400">on {metrics.lowestDate ? formatDate(metrics.lowestDate) : 'N/A'}</p>
+            <p className="text-[10px] sm:text-xs text-slate-400 truncate">{metrics.lowestDate ? formatDate(metrics.lowestDate) : 'N/A'}</p>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-            <BarChart3 size={20} />
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4">
+          <div className="p-2 sm:p-3 bg-purple-50 text-purple-600 rounded-xl shrink-0">
+            <BarChart3 size={18} className="sm:w-5 sm:h-5" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase">Ending Balance ({horizonDays}d)</p>
-            <p className="text-xl font-bold text-slate-900">
+          <div className="min-w-0">
+            <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase truncate">Ending Balance</p>
+            <p className="text-lg sm:text-xl font-bold text-slate-900 tabular-nums truncate">
               {formatCurrency(metrics.endBalance)}
             </p>
           </div>
@@ -1084,23 +1084,25 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
                       <p className="text-xs text-slate-400">{formatDate(tx.date)}</p>
                     </div>
 
-                    <div
-                      className={`text-right font-semibold tabular-nums text-sm ${
-                        tx.amount > 0 ? 'text-green-600' : tx.amount < 0 ? 'text-red-500' : 'text-slate-600'
-                      }`}
-                    >
-                      {tx.amount > 0 ? `+${formatCurrency(tx.amount)}` : tx.amount < 0 ? `-${formatCurrency(Math.abs(tx.amount))}` : formatCurrency(0)}
-                    </div>
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                      <div className="text-right">
+                        <div
+                          className={`font-semibold tabular-nums text-xs sm:text-sm ${
+                            tx.amount > 0 ? 'text-green-600' : tx.amount < 0 ? 'text-red-500' : 'text-slate-600'
+                          }`}
+                        >
+                          {tx.amount > 0 ? `+${formatCurrency(tx.amount)}` : tx.amount < 0 ? `-${formatCurrency(Math.abs(tx.amount))}` : formatCurrency(0)}
+                        </div>
+                        <div
+                          className={`font-mono text-[10px] sm:text-xs font-bold tabular-nums ${
+                            tx.runningBalance >= 0 ? 'text-slate-500' : 'text-red-600'
+                          }`}
+                        >
+                          Bal: {formatCurrency(tx.runningBalance)}
+                        </div>
+                      </div>
 
-                    <div
-                      className={`w-24 text-right font-mono text-xs font-bold tabular-nums ${
-                        tx.runningBalance >= 0 ? 'text-slate-700' : 'text-red-600'
-                      }`}
-                    >
-                      {formatCurrency(tx.runningBalance)}
-                    </div>
-
-                    <div className="flex items-center gap-1 pl-1">
+                      <div className="flex items-center gap-1 pl-1">
                       {tx.isScenario ? (
                         <button
                           onClick={() => {
@@ -1146,6 +1148,7 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
                           )}
                         </>
                       )}
+                      </div>
                     </div>
                   </div>
                 ))}

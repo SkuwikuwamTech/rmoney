@@ -714,42 +714,42 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
           <p className="text-slate-500">All income, expenses, and transfers across your accounts</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleStartReconciliation}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition-colors font-semibold flex items-center gap-2 shadow-sm"
+            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition-colors font-semibold flex items-center gap-1.5 text-xs sm:text-sm shadow-sm"
             title="Reconcile against your bank or card statement"
           >
-            <Scale size={18} className="text-emerald-400" />
-            Reconcile
+            <Scale size={16} className="text-emerald-400" />
+            <span>Reconcile</span>
           </button>
           <button
             onClick={() => handleOpenAdd('expense')}
-            className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-semibold flex items-center gap-2 shadow-sm"
+            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-semibold flex items-center gap-1.5 text-xs sm:text-sm shadow-sm"
           >
-            <Plus size={18} />
-            Add Expense
+            <Plus size={16} />
+            <span>Expense</span>
           </button>
           <button
             onClick={() => handleOpenAdd('income')}
-            className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold flex items-center gap-2 shadow-sm"
+            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold flex items-center gap-1.5 text-xs sm:text-sm shadow-sm"
           >
-            <Plus size={18} />
-            Add Income
+            <Plus size={16} />
+            <span>Income</span>
           </button>
           <button
             onClick={() => handleOpenAdd('transfer')}
-            className="px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors font-semibold flex items-center gap-2 shadow-sm"
+            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors font-semibold flex items-center gap-1.5 text-xs sm:text-sm shadow-sm"
           >
-            <ArrowRightLeft size={18} />
-            Transfer
+            <ArrowRightLeft size={16} />
+            <span>Transfer</span>
           </button>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-        <div className="relative">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="relative sm:col-span-2 lg:col-span-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
             type="text"
@@ -1182,8 +1182,149 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
         </div>
       )}
 
-      {/* Transactions Table */}
-      <div className="flex-1 min-h-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-auto">
+      {/* Mobile Transactions Feed (< md) */}
+      <div className="md:hidden space-y-2.5">
+        {loading ? (
+          <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-400 text-sm italic">
+            Loading transactions...
+          </div>
+        ) : filteredTransactions.length === 0 ? (
+          <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-400 text-sm italic">
+            No transactions match your filters.
+          </div>
+        ) : (
+          filteredTransactions.map((t) => {
+            const status = t.status || 'uncleared';
+            const hasSplits = Boolean(t.split_count && t.split_count > 0);
+            const isExpanded = expandedSplitsTxId === t.id;
+
+            return (
+              <div
+                key={t.id}
+                className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs space-y-2.5"
+              >
+                {/* Top Row: Payee & Amount */}
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${
+                        t.amount < 0
+                          ? 'bg-rose-50 text-rose-600'
+                          : 'bg-emerald-50 text-emerald-600'
+                      }`}
+                    >
+                      {t.amount < 0 ? (
+                        <ArrowDownCircle size={20} />
+                      ) : (
+                        <ArrowUpCircle size={20} />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900 text-sm truncate flex items-center gap-1.5">
+                        <span className="truncate">{t.payee}</span>
+                        {Boolean(t.attachment_count && t.attachment_count > 0) && (
+                          <button
+                            onClick={() => setViewingReceiptTx(t)}
+                            className="p-1 rounded text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 shrink-0"
+                            title="Receipt attached"
+                          >
+                            <Paperclip size={11} />
+                          </button>
+                        )}
+                      </p>
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
+                        <span>{formatDate(t.date)}</span>
+                        <span>&bull;</span>
+                        <span className="truncate">{t.account_name}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span
+                      className={`font-black tabular-nums text-base block ${
+                        t.amount < 0 ? 'text-red-500' : 'text-emerald-600'
+                      }`}
+                    >
+                      {formatCurrency(t.amount, { showSign: true })}
+                    </span>
+                    <button
+                      onClick={() => handleCycleStatus(t)}
+                      className={`mt-1 inline-flex items-center justify-center font-black text-[10px] px-2 py-0.5 rounded-md shadow-2xs ${
+                        status === 'reconciled'
+                          ? 'bg-blue-600 text-white'
+                          : status === 'cleared'
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          : 'bg-slate-100 text-slate-400 border border-slate-200'
+                      }`}
+                      title="Click to cycle status"
+                    >
+                      {status === 'reconciled' ? 'Reconciled' : status === 'cleared' ? 'Cleared' : 'Uncleared'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bottom Row: Category & Quick Actions */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                  <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 truncate max-w-[140px]">
+                      {t.category_name || 'General'}
+                    </span>
+                    {hasSplits && (
+                      <button
+                        type="button"
+                        onClick={() => loadTransactionSplits(t.id)}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          isExpanded
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                        }`}
+                      >
+                        <Split size={10} />
+                        <span>{t.split_count} Splits</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => handleStartEdit(t)}
+                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Edit Transaction"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTransaction(t)}
+                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete Transaction"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mobile Splits Dropdown */}
+                {isExpanded && (
+                  <div className="bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100 space-y-1.5 text-xs">
+                    {(loadedSplits[t.id] || []).map((s, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-white p-2 rounded-lg border border-indigo-100/60">
+                        <span className="font-medium text-slate-700">{s.category_name}</span>
+                        <span className={`font-mono font-bold ${s.amount < 0 ? 'text-red-500' : 'text-green-600'}`}>
+                          {formatCurrency(s.amount, { showSign: true })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop Transactions Table (hidden on mobile, visible on md+) */}
+      <div className="hidden md:block flex-1 min-h-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-auto">
         <table className="w-full text-left border-collapse">
           <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider shadow-xs">
             <tr className="divide-x divide-slate-200">

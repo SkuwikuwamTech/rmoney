@@ -656,7 +656,7 @@ const App = () => {
       {/* Main App Container */}
       <div className="flex-1 flex flex-col overflow-hidden relative min-w-0">
         {/* Mobile Top Header (Shown only on < md screens) */}
-        <header className="flex md:hidden items-center justify-between px-4 py-2.5 bg-slate-900 text-white border-b border-slate-800 shadow-sm shrink-0 z-30">
+        <header className="flex md:hidden items-center justify-between px-3.5 py-2.5 bg-slate-900 text-white border-b border-slate-800 shadow-sm shrink-0 z-30 pt-[max(0.625rem,env(safe-area-inset-top))]">
           <div className="flex items-center gap-2.5">
             <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-500 text-white shadow-md shadow-blue-500/20 ring-1 ring-white/20 shrink-0">
               <span className="font-brand font-bold italic text-xl select-none leading-none pr-0.5 pb-0.5">r</span>
@@ -701,12 +701,12 @@ const App = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto p-4 pb-20 sm:p-6 sm:pb-24 md:p-8 md:pb-8 flex flex-col min-w-0">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 pb-24 sm:p-6 sm:pb-24 md:p-8 md:pb-8 flex flex-col min-w-0">
           {renderPage()}
         </main>
 
         {/* Mobile Bottom Navigation Bar */}
-        <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/90 px-2 py-1.5 justify-around items-center safe-area-bottom shadow-2xl">
+        <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/90 px-1 py-1 justify-around items-center pb-[max(0.4rem,env(safe-area-inset-bottom))] shadow-2xl">
           <button
             onClick={() => { setActivePage('dashboard'); setIsMobileMenuOpen(false); }}
             className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
@@ -1151,7 +1151,7 @@ const Dashboard = ({
       </div>
 
       {/* Key Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <StatCard
           label="Total Net Worth"
           value={formatCurrency(totalBalance)}
@@ -1174,13 +1174,13 @@ const Dashboard = ({
         />
       </div>
 
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
         {/* Favorite Accounts */}
-        <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col min-h-0">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-              <Star size={20} className="text-amber-400 fill-amber-400" />
-              {favoriteAccounts.length > 0 ? 'Favorite Accounts' : 'All Accounts'}
+        <section className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 flex flex-col min-h-0">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h2 className="text-base sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+              <Star size={18} className="text-amber-400 fill-amber-400" />
+              <span>{favoriteAccounts.length > 0 ? 'Favorite Accounts' : 'All Accounts'}</span>
             </h2>
             <button
               onClick={() => onNavigate('accounts')}
@@ -1190,9 +1190,9 @@ const Dashboard = ({
             </button>
           </div>
 
-<div className="flex-1 min-h-0 space-y-2.5 overflow-y-auto">
+          <div className="flex-1 min-h-0 space-y-2 sm:space-y-2.5 overflow-y-auto">
             {accountsToDisplay.length === 0 ? (
-              <p className="text-slate-400 text-sm italic py-4">
+              <p className="text-slate-400 text-xs sm:text-sm italic py-4 text-center">
                 No accounts created yet. Head over to Accounts to add one.
               </p>
             ) : (
@@ -1200,33 +1200,33 @@ const Dashboard = ({
                 <div
                   key={acc.id}
                   onClick={() => onOpenAccountDetail && onOpenAccountDetail(acc)}
-                  className="flex justify-between items-center p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100 hover:bg-blue-50/50 hover:border-blue-200 transition-all cursor-pointer group"
+                  className="flex justify-between items-center p-3 sm:p-3.5 bg-slate-50/80 rounded-xl sm:rounded-2xl border border-slate-100 hover:bg-blue-50/50 hover:border-blue-200 transition-all cursor-pointer group"
                   title="Click to view running balance history & analytics"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleFavorite(acc);
                       }}
                       title={acc.is_favorite ? 'Unmark Favorite' : 'Mark as Favorite'}
-                      className="text-slate-300 hover:text-amber-400 transition-colors"
+                      className="text-slate-300 hover:text-amber-400 transition-colors shrink-0"
                     >
                       <Star
                         size={16}
                         className={acc.is_favorite ? 'text-amber-400 fill-amber-400' : ''}
                       />
                     </button>
-                    <div>
-                      <p className="font-semibold text-slate-800 text-sm group-hover:text-blue-600 transition-colors flex items-center gap-1.5">
-                        {acc.name}
-                        <TrendingUp size={12} className="opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity" />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-blue-600 transition-colors flex items-center gap-1 truncate">
+                        <span className="truncate">{acc.name}</span>
+                        <TrendingUp size={12} className="opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity shrink-0" />
                       </p>
-                      <p className="text-xs text-slate-400">{acc.type || 'Checking'}</p>
+                      <p className="text-[11px] text-slate-400 truncate">{acc.type || 'Checking'}</p>
                     </div>
                   </div>
                   <span
-                    className={`font-bold tabular-nums text-base ${
+                    className={`font-bold tabular-nums text-sm sm:text-base shrink-0 ${
                       acc.balance < 0 ? 'text-red-500' : 'text-slate-900'
                     }`}
                   >
@@ -1239,33 +1239,33 @@ const Dashboard = ({
         </section>
 
         {/* Quick Actions */}
-        <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-slate-800 mb-2">Quick Actions</h2>
-            <p className="text-sm text-slate-500 mb-6">Instantly record transactions or move money</p>
+        <section className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
+          <div className="mb-3 sm:mb-6">
+            <h2 className="text-base sm:text-xl font-bold text-slate-800 mb-1">Quick Actions</h2>
+            <p className="text-xs sm:text-sm text-slate-500">Instantly record transactions or move money</p>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <button
               onClick={onAddExpense}
-              className="flex flex-col items-center justify-center p-5 bg-red-50 text-red-700 rounded-2xl hover:bg-red-100 transition-all border border-red-100/80 shadow-xs group"
+              className="flex flex-col items-center justify-center p-2.5 sm:p-5 bg-red-50 text-red-700 rounded-xl sm:rounded-2xl hover:bg-red-100 transition-all border border-red-100/80 shadow-xs group"
             >
-              <ArrowDownCircle size={26} className="mb-2 text-red-500 group-hover:scale-110 transition-transform" />
-              <span className="font-bold text-sm">Add Expense</span>
+              <ArrowDownCircle className="mb-1 sm:mb-2 text-red-500 group-hover:scale-110 transition-transform size-5 sm:size-6.5" />
+              <span className="font-bold text-[11px] sm:text-sm truncate">Add Expense</span>
             </button>
             <button
               onClick={onAddIncome}
-              className="flex flex-col items-center justify-center p-5 bg-green-50 text-green-700 rounded-2xl hover:bg-green-100 transition-all border border-green-100/80 shadow-xs group"
+              className="flex flex-col items-center justify-center p-2.5 sm:p-5 bg-green-50 text-green-700 rounded-xl sm:rounded-2xl hover:bg-green-100 transition-all border border-green-100/80 shadow-xs group"
             >
-              <ArrowUpCircle size={26} className="mb-2 text-green-500 group-hover:scale-110 transition-transform" />
-              <span className="font-bold text-sm">Add Income</span>
+              <ArrowUpCircle className="mb-1 sm:mb-2 text-green-500 group-hover:scale-110 transition-transform size-5 sm:size-6.5" />
+              <span className="font-bold text-[11px] sm:text-sm truncate">Add Income</span>
             </button>
             <button
               onClick={onTransfer}
-              className="flex flex-col items-center justify-center p-5 bg-purple-50 text-purple-700 rounded-2xl hover:bg-purple-100 transition-all border border-purple-100/80 shadow-xs group"
+              className="flex flex-col items-center justify-center p-2.5 sm:p-5 bg-purple-50 text-purple-700 rounded-xl sm:rounded-2xl hover:bg-purple-100 transition-all border border-purple-100/80 shadow-xs group"
             >
-              <ArrowRightLeft size={26} className="mb-2 text-purple-500 group-hover:scale-110 transition-transform" />
-              <span className="font-bold text-sm">Transfer</span>
+              <ArrowRightLeft className="mb-1 sm:mb-2 text-purple-500 group-hover:scale-110 transition-transform size-5 sm:size-6.5" />
+              <span className="font-bold text-[11px] sm:text-sm truncate">Transfer</span>
             </button>
           </div>
         </section>
@@ -1407,11 +1407,11 @@ const StatCard = ({
   value: string;
   icon: React.ReactNode;
 }) => (
-  <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 flex items-center gap-4">
-    <div className="p-3 bg-slate-50 rounded-2xl">{icon}</div>
+  <div className="bg-white p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/90 flex items-center gap-2.5 sm:gap-4 min-w-0">
+    <div className="p-2 sm:p-3 bg-slate-50 rounded-xl sm:rounded-2xl shrink-0 [&>svg]:size-4.5 sm:[&>svg]:size-5.5">{icon}</div>
     <div className="flex-1 min-w-0">
-      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider truncate">{label}</p>
-      <p className="text-2xl font-black text-slate-900 tracking-tight truncate tabular-nums">{value}</p>
+      <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider truncate">{label}</p>
+      <p className="text-base sm:text-xl lg:text-2xl font-black text-slate-900 tracking-tight truncate tabular-nums">{value}</p>
     </div>
   </div>
 );
@@ -1556,52 +1556,54 @@ const AccountsPage = ({
           <p className="text-slate-500">Configure bank accounts, credit cards, and cash balances</p>
         </div>
 
-        {/* Add Account Inline Form */}
-        <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
+        {/* Add Account Form */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white p-3 sm:p-2 rounded-2xl border border-slate-200 shadow-sm w-full lg:w-auto">
           <input
             type="text"
             placeholder="Account Name (e.g. Chase)"
-            className="px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            className="w-full sm:w-auto px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             value={newAccName}
             onChange={(e) => setNewAccName(e.target.value)}
           />
-          <select
-            className="px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white font-medium"
-            value={newAccType}
-            onChange={(e) => setNewAccType(e.target.value)}
-          >
-            <option value="Checking">Checking</option>
-            <option value="Savings">Savings</option>
-            <option value="Credit Card">Credit Card</option>
-            <option value="Cash">Cash</option>
-            <option value="Investment">Investment</option>
-            <option value="Loan">Loan</option>
-          </select>
-          <input
-            type="number"
-            step="0.01"
-            placeholder={`Balance (${currency.symbol.trim()})`}
-            className="px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 w-28 text-sm"
-            value={newAccBalance}
-            onChange={(e) => setNewAccBalance(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addAccount()}
-          />
+          <div className="flex items-center gap-2">
+            <select
+              className="flex-1 sm:w-auto px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white font-medium"
+              value={newAccType}
+              onChange={(e) => setNewAccType(e.target.value)}
+            >
+              <option value="Checking">Checking</option>
+              <option value="Savings">Savings</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Cash">Cash</option>
+              <option value="Investment">Investment</option>
+              <option value="Loan">Loan</option>
+            </select>
+            <input
+              type="number"
+              step="0.01"
+              placeholder={`Balance (${currency.symbol.trim()})`}
+              className="w-28 sm:w-28 px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-semibold"
+              value={newAccBalance}
+              onChange={(e) => setNewAccBalance(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addAccount()}
+            />
+          </div>
           {!proStatus && accounts.length >= 2 ? (
             <button
               type="button"
               onClick={() => onTriggerUpgrade && onTriggerUpgrade('accounts_limit')}
-              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+              className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-all"
             >
               <Crown size={16} />
-              Unlock Unlimited
+              <span>Unlock Unlimited</span>
             </button>
           ) : (
             <button
               onClick={addAccount}
-              className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors font-semibold flex items-center gap-1.5 text-sm shadow-sm cursor-pointer"
+              className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center gap-1.5 text-sm shadow-sm cursor-pointer"
             >
               <PlusCircle size={16} />
-              Add Account
+              <span>Add Account</span>
             </button>
           )}
         </div>
@@ -1609,8 +1611,8 @@ const AccountsPage = ({
 
       {/* Edit Account Modal */}
       {editingAcc && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl animate-in zoom-in-95 duration-150 space-y-4">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-xs p-3">
+          <div className="bg-white rounded-2xl p-5 sm:p-6 w-full max-w-md shadow-xl animate-in zoom-in-95 duration-150 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="font-bold text-lg text-slate-800">Edit Account</h3>
               <button
@@ -1678,8 +1680,75 @@ const AccountsPage = ({
         </div>
       )}
 
-      {/* Accounts Table */}
-      <div className="flex-1 min-h-0 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-auto">
+      {/* Mobile Accounts Card List (< md) */}
+      <div className="md:hidden space-y-2.5">
+        {accounts.length === 0 ? (
+          <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-400 text-sm italic">
+            No accounts yet. Use the form above to add your first account!
+          </div>
+        ) : (
+          accounts.map((acc) => (
+            <div
+              key={acc.id}
+              className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <button
+                  onClick={() => toggleFavorite(acc)}
+                  title={acc.is_favorite ? 'Unfavorite' : 'Favorite'}
+                  className="text-slate-300 hover:text-amber-400 transition-colors shrink-0 p-1"
+                >
+                  <Star
+                    size={18}
+                    className={acc.is_favorite ? 'text-amber-400 fill-amber-400' : ''}
+                  />
+                </button>
+                <div
+                  onClick={() => onOpenDetail && onOpenDetail(acc)}
+                  className="min-w-0 cursor-pointer"
+                >
+                  <p className="font-bold text-slate-900 text-sm truncate flex items-center gap-1">
+                    <span>{acc.name}</span>
+                    <TrendingUp size={12} className="text-blue-500 shrink-0" />
+                  </p>
+                  <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
+                    {acc.type || 'Checking'}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
+                <span
+                  onClick={() => onOpenDetail && onOpenDetail(acc)}
+                  className={`font-bold tabular-nums text-base cursor-pointer ${
+                    acc.balance < 0 ? 'text-red-500' : 'text-slate-900'
+                  }`}
+                >
+                  {formatCurrency(acc.balance)}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleStartEdit(acc)}
+                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Edit Account"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteAccount(acc)}
+                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete Account"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Accounts Table (hidden on mobile, visible on md+) */}
+      <div className="hidden md:block flex-1 min-h-0 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-auto">
         <table className="w-full text-left border-collapse">
           <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider shadow-xs">
             <tr className="divide-x divide-slate-200">
