@@ -102,28 +102,36 @@ const UpgradeModal = ({
 
         {/* Features Comparison */}
         <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 divide-y divide-slate-200/60 text-xs">
-          <div className="flex items-center justify-between pb-2.5">
+          <div className="pb-2.5 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <span>Feature / Capability</span>
+            <div className="flex items-center gap-5">
+              <span>Free Forever ($0)</span>
+              <span className="text-amber-600">Pro Lifetime ($29)</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between py-2.5">
             <span className="font-semibold text-slate-700 flex items-center gap-2">
               <Wallet size={15} className="text-blue-500" />
-              Connected Accounts
+              Connected Accounts &amp; Ledgers
             </span>
             <div className="flex items-center gap-4">
-              <span className="text-slate-400 font-medium">Free: 2 max</span>
+              <span className="text-slate-500 font-medium">Up to 2 Accounts</span>
               <span className="text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
-                Pro: Unlimited
+                Unlimited
               </span>
             </div>
           </div>
 
           <div className="flex items-center justify-between py-2.5">
             <span className="font-semibold text-slate-700 flex items-center gap-2">
-              <Paperclip size={15} className="text-emerald-600" />
-              Receipt & PDF Attachments
+              <Check size={15} className="text-emerald-500" />
+              Budget Pacing, Rules &amp; 365-Day Baseline
             </span>
             <div className="flex items-center gap-4">
-              <span className="text-slate-400 font-medium">Free: 3 sample receipts</span>
+              <span className="text-emerald-600 font-semibold">✓ Included Free</span>
               <span className="text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
-                Pro: Unlimited
+                ✓ Included
               </span>
             </div>
           </div>
@@ -131,12 +139,25 @@ const UpgradeModal = ({
           <div className="flex items-center justify-between py-2.5">
             <span className="font-semibold text-slate-700 flex items-center gap-2">
               <TrendingUp size={15} className="text-amber-500" />
-              What-If Cash Flow Simulator
+              What-If Life Decision &amp; Debt Simulator
             </span>
             <div className="flex items-center gap-4">
-              <span className="text-slate-400 font-medium">Free: ❌ Locked</span>
+              <span className="text-slate-400 font-medium">Preview Only</span>
               <span className="text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
-                Pro: Included
+                Full Sandbox + CSV
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between py-2.5">
+            <span className="font-semibold text-slate-700 flex items-center gap-2">
+              <Paperclip size={15} className="text-emerald-600" />
+              Receipt &amp; Invoice Document Vault
+            </span>
+            <div className="flex items-center gap-4">
+              <span className="text-slate-500 font-medium">3 Attachments</span>
+              <span className="text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
+                Unlimited Vault
               </span>
             </div>
           </div>
@@ -144,30 +165,22 @@ const UpgradeModal = ({
           <div className="flex items-center justify-between py-2.5">
             <span className="font-semibold text-slate-700 flex items-center gap-2">
               <Sparkles size={15} className="text-purple-500" />
-              Advanced Reports & PDF Export
+              Executive Reports &amp; CPA Tax PDFs
             </span>
             <div className="flex items-center gap-4">
-              <span className="text-slate-400 font-medium">Free: Basic</span>
+              <span className="text-slate-500 font-medium">Cash Flow Overview</span>
               <span className="text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
-                Pro: Full Suite
+                P&amp;L, Net Worth &amp; Tax
               </span>
             </div>
-          </div>
-
-          <div className="flex items-center justify-between py-2.5">
-            <span className="font-semibold text-slate-700 flex items-center gap-2">
-              <Shield size={15} className="text-indigo-500" />
-              License Model
-            </span>
-            <span className="text-slate-700 font-bold">100% Offline • Lifetime Purchase</span>
           </div>
 
           <div className="flex items-center justify-between pt-2.5">
             <span className="font-semibold text-slate-700 flex items-center gap-2">
-              <Sparkles size={15} className="text-purple-500" />
-              No Monthly Subscriptions
+              <Shield size={15} className="text-indigo-500" />
+              Ownership &amp; Privacy Guarantee
             </span>
-            <span className="text-slate-700 font-bold">Never Pay Monthly Fees</span>
+            <span className="text-slate-800 font-bold">100% Offline • $29 Once (Save $109/yr)</span>
           </div>
         </div>
 

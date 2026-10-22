@@ -1298,9 +1298,80 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
 
             {/* Scenario Builder Form (inspired by Microsoft Money) */}
             <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-5 space-y-4">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Add a What-If Statement
-              </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Add a What-If Statement
+                </p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">1-Click Demo Presets:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + 14);
+                      setScenarioEvents((prev) => [
+                        ...prev,
+                        {
+                          id: String(Date.now() + Math.random()),
+                          statementType: 'spend_date',
+                          payee: 'New Vehicle Loan Payment',
+                          amount: 450,
+                          date: toISODateString(d),
+                          frequency: 'monthly',
+                          accountId: 'all',
+                        },
+                      ]);
+                    }}
+                    className="px-2 py-1 rounded-lg bg-white border border-slate-200 hover:border-amber-400 text-[11px] font-semibold text-slate-700 transition-colors cursor-pointer"
+                  >
+                    + New Car ($450/mo)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + 45);
+                      setScenarioEvents((prev) => [
+                        ...prev,
+                        {
+                          id: String(Date.now() + Math.random()),
+                          statementType: 'spend_date',
+                          payee: 'European Family Vacation',
+                          amount: 2400,
+                          date: toISODateString(d),
+                          frequency: 'once',
+                          accountId: 'all',
+                        },
+                      ]);
+                    }}
+                    className="px-2 py-1 rounded-lg bg-white border border-slate-200 hover:border-amber-400 text-[11px] font-semibold text-slate-700 transition-colors cursor-pointer"
+                  >
+                    + Vacation ($2,400)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + 15);
+                      setScenarioEvents((prev) => [
+                        ...prev,
+                        {
+                          id: String(Date.now() + Math.random()),
+                          statementType: 'receive_date',
+                          payee: 'Promotion / Salary Raise',
+                          amount: 550,
+                          date: toISODateString(d),
+                          frequency: 'monthly',
+                          accountId: 'all',
+                        },
+                      ]);
+                    }}
+                    className="px-2 py-1 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 text-[11px] font-semibold text-emerald-700 transition-colors cursor-pointer"
+                  >
+                    + Raise (+$550/mo)
+                  </button>
+                </div>
+              </div>
 
               {/* Account Selector */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">

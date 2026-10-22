@@ -321,13 +321,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-slate-900 text-base">Explore with Sample Data</h4>
+                        <h4 className="font-bold text-slate-900 text-base">Explore with Showcase Demo Profile</h4>
                         <span className="bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-2xs">
                           Recommended
                         </span>
                       </div>
                       <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                        Preloads realistic accounts (Checking, Savings, Credit Card), 30+ categorized transactions, recurring bills, and budget targets so you can immediately test reports and forecasting.
+                        Preloads 6 realistic accounts (Checking, Savings, Credit Card, Investment, Auto &amp; Student Loans), 30+ transactions with splits &amp; 3 sample receipts, recurring bills, single-instance overrides, and Debt Snowball/Avalanche plans.
                       </p>
                     </div>
                   </div>

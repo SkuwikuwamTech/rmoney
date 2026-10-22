@@ -1,0 +1,69 @@
+{
+  "exportDate": "2026-10-22T17:30:00.000Z",
+  "version": "1.0.10",
+  "profileName": "rMoney Official Showcase Demo Profile",
+  "accounts": [
+    { "id": 1, "name": "Premier Checking", "type": "Checking", "balance": 6420.50, "currency": "USD", "is_favorite": 1 },
+    { "id": 2, "name": "High-Yield Sanctuary Savings", "type": "Savings", "balance": 28500.00, "currency": "USD", "is_favorite": 1 },
+    { "id": 3, "name": "Sapphire Preferred Rewards", "type": "Credit Card", "balance": -1480.60, "currency": "USD", "is_favorite": 1 },
+    { "id": 4, "name": "Vanguard Total Market Index", "type": "Investment", "balance": 64850.75, "currency": "USD", "is_favorite": 1 },
+    { "id": 5, "name": "Honda Civic Touring Loan", "type": "Loan", "balance": -11450.00, "currency": "USD", "is_favorite": 0 },
+    { "id": 6, "name": "Federal Direct Student Loan", "type": "Loan", "balance": -8200.00, "currency": "USD", "is_favorite": 0 }
+  ],
+  "categories": [
+    { "id": 1, "name": "Salary", "type": "income", "monthly_budget": 0 },
+    { "id": 2, "name": "Freelance & Consulting", "type": "income", "monthly_budget": 0 },
+    { "id": 3, "name": "Dividends & Interest", "type": "income", "monthly_budget": 0 },
+    { "id": 4, "name": "Housing & Rent", "type": "expense", "monthly_budget": 1850 },
+    { "id": 5, "name": "Groceries & Markets", "type": "expense", "monthly_budget": 650 },
+    { "id": 6, "name": "Dining & Restaurants", "type": "expense", "monthly_budget": 300 },
+    { "id": 7, "name": "Utilities & Power", "type": "expense", "monthly_budget": 220 },
+    { "id": 8, "name": "Internet & Mobile", "type": "expense", "monthly_budget": 120 },
+    { "id": 9, "name": "Transportation & Fuel", "type": "expense", "monthly_budget": 250 },
+    { "id": 10, "name": "Healthcare & Wellness", "type": "expense", "monthly_budget": 150 },
+    { "id": 11, "name": "Entertainment & Streaming", "type": "expense", "monthly_budget": 100 },
+    { "id": 12, "name": "Shopping & Electronics", "type": "expense", "monthly_budget": 250 },
+    { "id": 13, "name": "Investments & Transfers", "type": "expense", "monthly_budget": 0 },
+    { "id": 14, "name": "General", "type": "expense", "monthly_budget": 150 }
+  ],
+  "transactions": [
+    { "id": 1, "account_id": 1, "category_id": 1, "date": "2026-10-12", "payee": "Acme Technologies Payroll", "amount": 3450.00, "memo": "Direct Deposit #8841", "status": "reconciled" },
+    { "id": 2, "account_id": 1, "category_id": 1, "date": "2026-09-28", "payee": "Acme Technologies Payroll", "amount": 3450.00, "memo": "Direct Deposit #8819", "status": "reconciled" },
+    { "id": 3, "account_id": 1, "category_id": 2, "date": "2026-10-08", "payee": "FinTech Consulting LLC", "amount": 1450.00, "memo": "Q3 Architecture Audit Invoice #104 (1099-NEC)", "status": "cleared" },
+    { "id": 4, "account_id": 2, "category_id": 3, "date": "2026-10-17", "payee": "High-Yield APY Interest Dividend", "amount": 112.45, "memo": "4.75% APY Monthly Yield", "status": "reconciled" },
+    { "id": 5, "account_id": 1, "category_id": 4, "date": "2026-10-03", "payee": "Metropolitan Luxury Apartments", "amount": -1850.00, "memo": "Monthly Rent Payment", "status": "reconciled" },
+    { "id": 6, "account_id": 1, "category_id": 7, "date": "2026-10-01", "payee": "City Electric & Power", "amount": -138.40, "memo": "Residential Electric Service", "status": "reconciled" },
+    { "id": 7, "account_id": 1, "category_id": 8, "date": "2026-10-06", "payee": "Gigabit Fiber Internet", "amount": -89.99, "memo": "1Gbps Business/Home Office Fiber [Tax Deductible]", "status": "cleared" },
+    { "id": 8, "account_id": 1, "category_id": 10, "date": "2026-10-10", "payee": "Equinox Fitness & Wellness", "amount": -75.00, "memo": "Monthly Wellness Membership", "status": "cleared" },
+    { "id": 9, "account_id": 1, "category_id": 9, "date": "2026-10-02", "payee": "Honda Financial Auto Payment", "amount": -290.00, "memo": "Auto Loan Principal & Interest", "status": "reconciled" },
+    { "id": 10, "account_id": 1, "category_id": 5, "date": "2026-10-21", "payee": "Trader Joe’s #542", "amount": -84.32, "memo": "Weekly organic grocery run", "status": "uncleared" },
+    { "id": 11, "account_id": 3, "category_id": 5, "date": "2026-10-16", "payee": "Costco Wholesale #118", "amount": -245.50, "memo": "Split: Groceries, Home Office Supplies & Pharmacy", "status": "cleared" },
+    { "id": 12, "account_id": 1, "category_id": 5, "date": "2026-10-07", "payee": "Whole Foods Market", "amount": -132.45, "memo": "Produce, meat & essentials", "status": "cleared" },
+    { "id": 14, "account_id": 3, "category_id": 6, "date": "2026-10-20", "payee": "Blue Bottle Coffee", "amount": -16.50, "memo": "Pour-over coffee & almond croissant", "status": "uncleared" },
+    { "id": 15, "account_id": 3, "category_id": 6, "date": "2026-10-18", "payee": "Osteria Del Corso", "amount": -148.80, "memo": "Client Advisory Dinner with Sarah & Dave [Tax Deductible]", "status": "cleared" },
+    { "id": 19, "account_id": 3, "category_id": 9, "date": "2026-10-11", "payee": "Uber Technologies", "amount": -34.90, "memo": "Airport transfer for client summit [Tax Deductible]", "status": "cleared" },
+    { "id": 20, "account_id": 3, "category_id": 12, "date": "2026-10-15", "payee": "Apple Store Downtown", "amount": -219.00, "memo": "Thunderbolt 4 Pro Dock & MagSafe Charger [Tax Deductible]", "status": "cleared" },
+    { "id": 22, "account_id": 1, "category_id": 13, "date": "2026-10-07", "payee": "Transfer to High-Yield Sanctuary Savings", "amount": -600.00, "memo": "Automated emergency fund contribution", "status": "reconciled" },
+    { "id": 23, "account_id": 2, "category_id": 13, "date": "2026-10-07", "payee": "Transfer from Premier Checking", "amount": 600.00, "memo": "Automated emergency fund contribution", "status": "reconciled" }
+  ],
+  "transaction_splits": [
+    { "id": 1, "transaction_id": 11, "category_id": 5, "amount": -145.50, "memo": "Organic groceries & bulk pantry" },
+    { "id": 2, "transaction_id": 11, "category_id": 12, "amount": -65.00, "memo": "Ergonomic desk mat & paper supplies" },
+    { "id": 3, "transaction_id": 11, "category_id": 10, "amount": -35.00, "memo": "Vitamins & pharmacy items" },
+    { "id": 4, "transaction_id": 20, "category_id": 12, "amount": -169.00, "memo": "Thunderbolt 4 Pro Dock (100% Home Office Deduction)" },
+    { "id": 5, "transaction_id": 20, "category_id": 14, "amount": -50.00, "memo": "Personal MagSafe travel cable" }
+  ],
+  "scheduled_transactions": [
+    { "id": 1, "account_id": 1, "category_id": 1, "amount": 3450.00, "frequency": "bi-weekly", "next_date": "2026-10-26", "payee": "Acme Technologies Payroll", "type": "income", "to_account_id": null },
+    { "id": 2, "account_id": 1, "category_id": 4, "amount": 1850.00, "frequency": "monthly", "next_date": "2026-11-02", "payee": "Metropolitan Luxury Apartments", "type": "expense", "to_account_id": null },
+    { "id": 3, "account_id": 1, "category_id": 7, "amount": 145.20, "frequency": "monthly", "next_date": "2026-10-29", "payee": "City Electric & Power", "type": "expense", "to_account_id": null },
+    { "id": 4, "account_id": 1, "category_id": 8, "amount": 89.99, "frequency": "monthly", "next_date": "2026-11-05", "payee": "Gigabit Fiber Internet", "type": "expense", "to_account_id": null },
+    { "id": 6, "account_id": 1, "category_id": 13, "amount": 600.00, "frequency": "monthly", "next_date": "2026-11-06", "payee": "Monthly Sanctuary Savings Transfer", "type": "transfer", "to_account_id": 2 },
+    { "id": 8, "account_id": 1, "category_id": 9, "amount": 290.00, "frequency": "monthly", "next_date": "2026-10-31", "payee": "Honda Financial Auto Payment", "type": "expense", "to_account_id": null },
+    { "id": 9, "account_id": 1, "category_id": 14, "amount": 140.00, "frequency": "monthly", "next_date": "2026-11-12", "payee": "Federal Student Aid Auto-Debit", "type": "expense", "to_account_id": null }
+  ],
+  "scheduled_transaction_overrides": [
+    { "id": 1, "scheduled_id": 3, "original_date": "2026-10-29", "new_date": "2026-10-31", "date": "2026-10-29", "amount": 182.50, "payee": "City Electric & Power (Seasonal Peak Adjustment)", "account_id": 1 },
+    { "id": 2, "scheduled_id": 1, "original_date": "2026-11-09", "new_date": "2026-11-09", "date": "2026-11-09", "amount": 4250.00, "payee": "Acme Technologies Payroll (+ Quarterly Performance Bonus)", "account_id": 1 }
+  ]
+}

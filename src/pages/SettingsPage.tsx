@@ -1222,7 +1222,7 @@ WARNING: This will replace your current data with the contents of this backup fi
   const handleLoadDemoData = async () => {
     if (
       !confirm(
-        'Generate Demo Dataset?\n\nThis will populate realistic demo accounts (Checking, Savings, Credit Card, Investment), 30+ transactions, recurring bills, and categorized expenses for testing and demonstration.\n\nProceed?'
+        'Load Showcase Demo Profile?\n\nThis will populate 6 realistic accounts (Checking, Savings, Credit Card, Investment, Auto & Student Loans), 30+ multi-month transactions, split expenses, 3 sample SVG receipts, smart auto-categorization rules, Debt Snowball/Avalanche portfolio, and 365-day forecast overrides.\n\nProceed?'
       )
     ) {
       return;
@@ -1474,30 +1474,34 @@ WARNING: This will replace your current data with the contents of this backup fi
 
                   <ul className="space-y-2.5 mt-3.5 text-slate-600">
                     <li className="flex items-center gap-2">
-                      <Check size={14} className="text-slate-400 shrink-0" />
-                      <span>Up to 2 connected accounts</span>
+                      <Check size={14} className="text-emerald-600 shrink-0" />
+                      <span><strong>Up to 2 accounts</strong> with full reconciliation &amp; split transactions</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check size={14} className="text-slate-400 shrink-0" />
-                      <span>Standard cash flow projection curve</span>
+                      <Check size={14} className="text-emerald-600 shrink-0" />
+                      <span><strong>Live Monthly Budget Planner</strong> with daily pacing gauges</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check size={14} className="text-slate-400 shrink-0" />
-                      <span>Overview Cash Flow report & PDF</span>
+                      <Check size={14} className="text-emerald-600 shrink-0" />
+                      <span><strong>Recurring Bills Scheduler</strong> &amp; 365-day baseline cash flow curve</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check size={14} className="text-slate-400 shrink-0" />
-                      <span>Up to 3 sample receipt attachments</span>
+                      <Check size={14} className="text-emerald-600 shrink-0" />
+                      <span><strong>Smart Auto-Categorization Rules</strong> &amp; CSV/QIF statement import</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check size={14} className="text-slate-400 shrink-0" />
-                      <span>Local SQLite ledger & privacy masking</span>
+                      <Check size={14} className="text-emerald-600 shrink-0" />
+                      <span><strong>Cash Flow Overview Report</strong> + up to 3 sample receipt attachments</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check size={14} className="text-emerald-600 shrink-0" />
+                      <span><strong>100% Private Local SQLite</strong> with PIN lock &amp; privacy masking</span>
                     </li>
                   </ul>
                 </div>
 
-                <div className="pt-3 border-t border-slate-200 text-slate-400 text-[11px]">
-                  Basic financial management for single account households.
+                <div className="pt-3 border-t border-slate-200 text-slate-500 text-[11px] font-medium">
+                  Free forever • No credit card required • Zero cloud tracking
                 </div>
               </div>
 
@@ -1806,10 +1810,10 @@ WARNING: This will replace your current data with the contents of this backup fi
             <div>
               <div className="flex items-center gap-2">
                 <Sparkles size={16} className="text-purple-600" />
-                <h3 className="font-bold text-slate-800 text-sm">Generate Sample Data</h3>
+                <h3 className="font-bold text-slate-800 text-sm">Showcase Demo Profile</h3>
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                Populate realistic checking, savings, credit cards, bills, and 30+ transactions for testing.
+                Preload 6 accounts (Checking, Savings, Card, Investments, Loans), 30+ transactions, splits, 3 receipts, debt portfolio &amp; forecast overrides.
               </p>
             </div>
             <button
@@ -1817,7 +1821,7 @@ WARNING: This will replace your current data with the contents of this backup fi
               className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-2xs cursor-pointer"
             >
               <Sparkles size={15} />
-              Load Sample Dataset
+              Load Showcase Demo Profile
             </button>
           </div>
 

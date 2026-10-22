@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Debt Snowball vs. Avalanche Calculator | Powered by rMoney</title>
+  <meta name="description" content="Compare Debt Snowball vs. Debt Avalanche payoff strategies side-by-side. Calculate your exact debt-free date, total interest saved, and download rMoney to track your payoff 100% offline.">
+  <meta property="og:title" content="Free Debt Snowball vs. Avalanche Payoff Calculator — Powered by rMoney">
+  <meta property="og:description" content="Enter your credit cards, auto loans, and student loans to compare Debt Snowball vs. Avalanche side-by-side with zero signups or tracking.">
+  <meta property="og:url" content="https://skuwikuwamtech.com/debt-payoff-calculator.html">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" href="assets/skuwikuwam-logo.png?v=3">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://assets.lemonsqueezy.com/lemon.js" defer></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-[#090d16] text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
+
+  <div class="fixed inset-0 bg-grid pointer-events-none z-0"></div>
+  <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-indigo-600/20 via-purple-600/10 to-transparent blur-[120px] pointer-events-none z-0"></div>
+
+  <!-- Navigation -->
+  <nav class="sticky top-0 z-50 glass-nav">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        <a href="index.html" class="flex items-center gap-3.5 group">
+          <img src="assets/skuwikuwam-logo.png?v=3" alt="Skuwikuwam Technologies Bear Den Logo" class="w-11 h-11 rounded-2xl shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform object-contain" />
+          <div>
+            <span class="text-lg font-black tracking-tight text-white block leading-tight">Skuwikuwam</span>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-400 block">Technologies</span>
+          </div>
+        </a>
+        <div class="hidden md:flex items-center gap-8">
+          <a href="index.html" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Home</a>
+          <a href="rmoney.html" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">rMoney App</a>
+          <a href="debt-payoff-calculator.html" class="text-sm font-semibold text-emerald-400 transition-colors">Free Debt Calculator</a>
+          <a href="pricing.html" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Pricing &amp; Download</a>
+        </div>
+        <div class="hidden md:flex items-center gap-4">
+          <a href="pricing.html" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Get rMoney Desktop</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="relative z-10 py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-12">
+    <!-- Header -->
+    <div class="text-center max-w-3xl mx-auto space-y-4">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full badge-privacy text-xs font-bold tracking-wide">
+        <i data-lucide="calculator" class="w-4 h-4 text-emerald-400"></i>
+        <span>100% BROWSER-LOCAL • ZERO DATA SENT TO ANY SERVER</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white">
+        Debt Snowball vs. Avalanche <span class="text-gradient-primary">Payoff Calculator</span>
+      </h1>
+      <p class="text-slate-300 text-base">
+        Enter your balances, interest rates, and minimum payments below to see how much faster you can become debt-free—powered by the exact amortization engine inside <strong>rMoney</strong>.
+      </p>
+    </div>
+
+    <!-- Calculator Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <!-- Left Column: Debt List & Inputs -->
+      <div class="lg:col-span-6 glass-card rounded-3xl p-6 sm:p-8 border border-slate-800 space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-extrabold text-white">Your Liabilities</h2>
+          <button id="calc-add-debt-btn" type="button" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Add Debt</span>
+          </button>
+        </div>
+
+        <div id="calc-debts-container" class="space-y-3"></div>
+
+        <div class="pt-4 border-t border-slate-800 space-y-2">
+          <div class="flex justify-between text-sm font-bold">
+            <span class="text-slate-200">Extra Monthly Payoff Budget:</span>
+            <span id="calc-extra-display" class="text-emerald-400 font-mono text-base">+$250 / mo</span>
+          </div>
+          <input id="calc-extra-input" type="range" min="0" max="1500" step="25" value="250" class="w-full accent-emerald-500 cursor-pointer" />
+          <div class="flex justify-between text-[11px] font-mono text-slate-500">
+            <span>$0/mo</span>
+            <span>+$500/mo</span>
+            <span>+$1,000/mo</span>
+            <span>+$1,500/mo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Side-by-Side Results & Lead Magnet CTA -->
+      <div class="lg:col-span-6 space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Avalanche Card -->
+          <div class="glass-card rounded-3xl p-6 border border-indigo-500/50 space-y-3 glow-primary">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black uppercase tracking-wider text-indigo-300">Debt Avalanche</span>
+              <span class="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full">Highest APR First</span>
+            </div>
+            <div>
+              <span class="text-xs text-slate-400 block">Debt-Free Timeline</span>
+              <span id="res-av-months" class="text-3xl font-black text-white font-mono">31 mos</span>
+            </div>
+            <div class="pt-2 border-t border-slate-800/80 space-y-1 text-xs">
+              <div class="flex justify-between">
+                <span class="text-slate-400">Total Interest Paid:</span>
+                <span id="res-av-interest" class="font-mono font-bold text-slate-200">$3,412</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Interest Saved vs. Min:</span>
+                <span id="res-av-saved" class="font-mono font-bold text-emerald-400">+$2,840</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Snowball Card -->
+          <div class="glass-card rounded-3xl p-6 border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black uppercase tracking-wider text-amber-400">Debt Snowball</span>
+              <span class="text-[10px] font-bold bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full">Smallest Balance First</span>
+            </div>
+            <div>
+              <span class="text-xs text-slate-400 block">Debt-Free Timeline</span>
+              <span id="res-sb-months" class="text-3xl font-black text-white font-mono">32 mos</span>
+            </div>
+            <div class="pt-2 border-t border-slate-800/80 space-y-1 text-xs">
+              <div class="flex justify-between">
+                <span class="text-slate-400">Total Interest Paid:</span>
+                <span id="res-sb-interest" class="font-mono font-bold text-slate-200">$3,590</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">1st Debt Eliminated:</span>
+                <span id="res-sb-firstwin" class="font-mono font-bold text-amber-400">Month 11</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lead Magnet Conversion Box -->
+        <div class="glass-card rounded-3xl p-6 sm:p-8 border border-emerald-500/40 bg-gradient-to-br from-emerald-950/30 via-slate-900 to-indigo-950/30 space-y-4">
+          <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            <span>Save &amp; Automate Your Payoff Plan Offline</span>
+          </div>
+          <h3 class="text-xl sm:text-2xl font-black text-white">
+            Want to link this payoff plan to your real checking &amp; budget trajectory?
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Download <strong>rMoney</strong> to track your real balances 100% offline, simulate how extra debt payments impact your <strong>365-day checking account buffer</strong>, and export full month-by-month CSV amortization schedules.
+          </p>
+          <div class="flex flex-col sm:flex-row items-center gap-3 pt-1">
+            <a href="pricing.html#downloads" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm text-center shadow-lg transition-all flex items-center justify-center gap-2">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span>Download rMoney Free ($0)</span>
+            </a>
+            <a href="https://skuwikuwamtech.lemonsqueezy.com/checkout/buy/485af06a-9388-44c7-a506-fd1cd2c4f3e5?embed=1" class="lemonsqueezy-button w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 font-bold text-xs sm:text-sm text-center transition-all">
+              Unlock Full Pro Planner ($29 Lifetime)
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-slate-800/80 bg-[#060910] relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-300">rMoney</span>
+        <span>by Skuwikuwam Technologies</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-6">
+        <a href="index.html" class="hover:text-white transition-colors">Home</a>
+        <a href="rmoney.html" class="hover:text-white transition-colors">rMoney App</a>
+        <a href="ynab-alternative.html" class="hover:text-white transition-colors">vs. YNAB</a>
+        <a href="quicken-alternative.html" class="hover:text-white transition-colors">vs. Quicken</a>
+        <a href="pricing.html" class="hover:text-white transition-colors">Pricing &amp; Downloads</a>
+      </div>
+      <p>&copy; 2026 Skuwikuwam Technologies.</p>
+    </div>
+  </footer>
+
+  <script>
+    lucide.createIcons();
+
+    const defaultDebts = [
+      { name: 'Sapphire Rewards Card', balance: 4200, apr: 22.49, min: 115 },
+      { name: 'Honda Civic Auto Loan', balance: 11450, apr: 5.9, min: 290 },
+      { name: 'Federal Student Loan', balance: 8200, apr: 4.8, min: 140 },
+    ];
+
+    const container = document.getElementById('calc-debts-container');
+    const extraInput = document.getElementById('calc-extra-input');
+    const extraDisplay = document.getElementById('calc-extra-display');
+    const addBtn = document.getElementById('calc-add-debt-btn');
+
+    function simulatePayoff(debts, extraMonthly, mode) {
+      const items = debts.map((d) => ({ ...d, bal: Math.max(0, Number(d.balance) || 0) })).filter((d) => d.bal > 0);
+      if (items.length === 0) return { months: 0, totalInterest: 0, firstWinMonth: 0 };
+
+      let months = 0;
+      let totalInterest = 0;
+      let firstWinMonth = 0;
+
+      while (items.some((d) => d.bal > 0.01) && months < 360) {
+        months++;
+        let pool = extraMonthly;
+
+        // Sort active debts by strategy
+        const active = items.filter((d) => d.bal > 0.01);
+        active.sort((a, b) => (mode === 'avalanche' ? b.apr - a.apr : a.bal - b.bal));
+
+        // Accrue monthly interest and pay minimums
+        for (const item of items) {
+          if (item.bal <= 0.01) {
+            pool += item.min; // Snowball/Avalanche rollup of freed minimum payments!
+            continue;
+          }
+          const monthlyInterest = item.bal * (item.apr / 100 / 12);
+          totalInterest += monthlyInterest;
+          item.bal += monthlyInterest;
+
+          const pmt = Math.min(item.bal, item.min);
+          item.bal -= pmt;
+          if (item.bal <= 0.01 && !firstWinMonth) firstWinMonth = months;
+        }
+
+        // Apply extra pool to highest priority active debt
+        for (const target of active) {
+          if (pool <= 0) break;
+          if (target.bal <= 0.01) continue;
+          const extraPmt = Math.min(target.bal, pool);
+          target.bal -= extraPmt;
+          pool -= extraPmt;
+          if (target.bal <= 0.01 && !firstWinMonth) firstWinMonth = months;
+        }
+      }
+
+      return { months, totalInterest: Math.round(totalInterest), firstWinMonth: firstWinMonth || months };
+    }
+
+    function renderDebts() {
+      container.innerHTML = '';
+      defaultDebts.forEach((d, idx) => {
+        const row = document.createElement('div');
+        row.className = 'p-3.5 bg-slate-900/90 rounded-2xl border border-slate-800 grid grid-cols-12 gap-2 items-center text-xs';
+        row.innerHTML = `
+          <div class="col-span-5">
+            <label class="text-[10px] text-slate-500 uppercase font-bold block">Account</label>
+            <input type="text" value="${d.name}" data-idx="${idx}" data-field="name" class="debt-input w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white font-semibold" />
+          </div>
+          <div class="col-span-3">
+            <label class="text-[10px] text-slate-500 uppercase font-bold block">Balance ($)</label>
+            <input type="number" value="${d.balance}" data-idx="${idx}" data-field="balance" class="debt-input w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-white font-mono font-bold" />
+          </div>
+          <div class="col-span-2">
+            <label class="text-[10px] text-slate-500 uppercase font-bold block">APR %</label>
+            <input type="number" step="0.1" value="${d.apr}" data-idx="${idx}" data-field="apr" class="debt-input w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-amber-400 font-mono font-bold" />
+          </div>
+          <div class="col-span-2">
+            <label class="text-[10px] text-slate-500 uppercase font-bold block">Min ($)</label>
+            <input type="number" value="${d.min}" data-idx="${idx}" data-field="min" class="debt-input w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-slate-300 font-mono" />
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      document.querySelectorAll('.debt-input').forEach((inp) => {
+        inp.addEventListener('input', (e) => {
+          const idx = Number(e.target.getAttribute('data-idx'));
+          const field = e.target.getAttribute('data-field');
+          defaultDebts[idx][field] = field === 'name' ? e.target.value : parseFloat(e.target.value) || 0;
+          recalculate();
+        });
+      });
+
+      recalculate();
+    }
+
+    function recalculate() {
+      const extra = parseFloat(extraInput.value) || 0;
+      extraDisplay.textContent = `+$${extra} / mo`;
+
+      const baseline = simulatePayoff(defaultDebts, 0, 'avalanche');
+      const av = simulatePayoff(defaultDebts, extra, 'avalanche');
+      const sb = simulatePayoff(defaultDebts, extra, 'snowball');
+
+      document.getElementById('res-av-months').textContent = `${av.months} mos`;
+      document.getElementById('res-av-interest').textContent = `$${av.totalInterest.toLocaleString()}`;
+      document.getElementById('res-av-saved').textContent = `+$${Math.max(0, baseline.totalInterest - av.totalInterest).toLocaleString()}`;
+
+      document.getElementById('res-sb-months').textContent = `${sb.months} mos`;
+      document.getElementById('res-sb-interest').textContent = `$${sb.totalInterest.toLocaleString()}`;
+      document.getElementById('res-sb-firstwin').textContent = `Month ${sb.firstWinMonth}`;
+    }
+
+    extraInput.addEventListener('input', recalculate);
+    addBtn.addEventListener('click', () => {
+      defaultDebts.push({ name: 'New Credit Line', balance: 2500, apr: 18.9, min: 65 });
+      renderDebts();
+    });
+
+    renderDebts();
+  </script>
+</body>
+</html>
