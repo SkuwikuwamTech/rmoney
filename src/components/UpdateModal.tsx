@@ -35,11 +35,14 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
   const handleStartUpdate = async () => {
     // If it's a direct release link from GitHub fallback, open download URL
     if (!updateInfo.rawUpdate && updateInfo.downloadUrl) {
+      const directUrl =
+        updateInfo.downloadUrl ||
+        `https://github.com/SkuwikuwamTech/rmoney/releases/download/v${updateInfo.version}/rMoney_${updateInfo.version}_x64-setup.exe`;
       try {
         const { openUrl } = await import('@tauri-apps/plugin-opener');
-        await openUrl(updateInfo.downloadUrl);
+        await openUrl(directUrl);
       } catch {
-        window.open(updateInfo.downloadUrl, '_blank');
+        window.open(directUrl, '_blank');
       }
       onClose();
       return;
@@ -87,9 +90,26 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
       if (onSuccess) onSuccess();
     } catch (e: any) {
       console.error('Update failed:', e);
-      setErrorMsg(e?.message || 'Failed to download and install update. Please check your internet connection.');
+      const msg =
+        typeof e === 'string'
+          ? e
+          : e?.message || e?.toString?.() || 'Signature verification or network error during package download.';
+      setErrorMsg(msg);
       setIsInstalling(false);
     }
+  };
+
+  const handleManualDownload = async () => {
+    const directUrl =
+      updateInfo?.downloadUrl ||
+      `https://github.com/SkuwikuwamTech/rmoney/releases/download/v${updateInfo?.version}/rMoney_${updateInfo?.version}_x64-setup.exe`;
+    try {
+      const { openUrl } = await import('@tauri-apps/plugin-opener');
+      await openUrl(directUrl);
+    } catch {
+      window.open(directUrl, '_blank');
+    }
+    onClose();
   };
 
   return (
@@ -178,9 +198,19 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
           )}
 
           {errorMsg && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700 font-medium">
-              <AlertCircle size={16} className="shrink-0 text-red-600" />
-              <span>{errorMsg}</span>
+            <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl flex flex-col gap-2 text-xs text-red-700 font-medium">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={16} className="shrink-0 text-red-600" />
+                <span className="leading-snug">{errorMsg}</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleManualDownload}
+                className="mt-1 self-start px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Download size={13} />
+                <span>Download Installer (.exe) Directly</span>
+              </button>
             </div>
           )}
 
