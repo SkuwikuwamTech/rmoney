@@ -3366,7 +3366,7 @@ dependencies = [
 
 [[package]]
 name = "rmoney"
-version = "1.0.10"
+version = "1.0.12"
 dependencies = [
  "serde",
  "serde_json",

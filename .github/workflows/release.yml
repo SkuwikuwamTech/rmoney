@@ -55,8 +55,11 @@ jobs:
               const fs = require('fs');
               const conf = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
               delete conf.plugins?.updater;
+              if (conf.bundle) delete conf.bundle.createUpdaterArtifacts;
               fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(conf, null, 2));
             "
+          else
+            echo "TAURI_SIGNING_PRIVATE_KEY detected! Building signed updater artifacts (latest.json)."
           fi
 
       - name: Build and release Tauri application
