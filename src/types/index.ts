@@ -60,7 +60,7 @@ export type TransactionRule = {
 export type Transaction = {
   id: number;
   account_id: number;
-  category_id: number;
+  category_id: number | null;
   date: string;
   payee: string;
   amount: number;
@@ -77,11 +77,11 @@ export type Transaction = {
 export type ScheduledTransaction = {
   id: number;
   account_id: number;
-  category_id: number;
+  category_id: number | null;
   amount: number;
   frequency: 'once' | 'daily' | 'weekly' | 'bi-weekly' | 'monthly' | 'yearly';
   next_date: string;
-  payee: string;
+  payee?: string;
   type: 'income' | 'expense' | 'transfer';
   to_account_id?: number; // Used for transfers
   account_name?: string;

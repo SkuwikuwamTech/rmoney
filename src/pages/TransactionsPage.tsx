@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { getDb } from '../utils/db';
 import { Transaction, Account, Category, TransactionRule } from '../types';
-import { useRegionalSettings, getLocalTodayStr } from '../utils/currency';
+import { useRegionalSettings, getLocalTodayStr, isTransferPayee } from '../utils/currency';
 import { getTransactionRules, matchRuleForTransaction } from '../utils/rulesEngine';
 import {
   Search,
@@ -235,7 +235,7 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
       amount: Math.abs(tx.amount).toFixed(2),
       date: tx.date,
       accountId: tx.account_id,
-      categoryId: tx.category_id,
+      categoryId: tx.category_id || 0,
       memo: tx.memo || '',
       txType: type,
     });
@@ -262,8 +262,8 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
         } else {
           setEditIsSplit(false);
           setEditSplits([
-            { categoryId: tx.category_id, amount: '', memo: '' },
-            { categoryId: tx.category_id, amount: '', memo: '' },
+            { categoryId: tx.category_id || 0, amount: '', memo: '' },
+            { categoryId: tx.category_id || 0, amount: '', memo: '' },
           ]);
         }
       } catch (err) {
@@ -273,8 +273,8 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
     } else {
       setEditIsSplit(false);
       setEditSplits([
-        { categoryId: tx.category_id, amount: '', memo: '' },
-        { categoryId: tx.category_id, amount: '', memo: '' },
+        { categoryId: tx.category_id || 0, amount: '', memo: '' },
+        { categoryId: tx.category_id || 0, amount: '', memo: '' },
       ]);
     }
   };
@@ -333,7 +333,9 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
       return;
     }
 
-    if (!editForm.payee.trim()) {
+    const isTransfer = isTransferPayee(editingTx.payee) || isTransferPayee(editForm.payee) || !editingTx.category_id;
+
+    if (!isTransfer && !editForm.payee.trim()) {
       alert('Please enter a payee or description.');
       return;
     }
@@ -345,7 +347,7 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
 
     const finalAmount = editForm.txType === 'expense' ? -Math.abs(numAmount) : Math.abs(numAmount);
 
-    if (editIsSplit) {
+    if (editIsSplit && !isTransfer) {
       let splitTotal = 0;
       for (let i = 0; i < editSplits.length; i++) {
         const s = editSplits[i];
@@ -399,9 +401,13 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
       }
 
       // 2. Update transaction row
-      const primaryCatId = editIsSplit
-        ? editSplits[0].categoryId
-        : editForm.categoryId || (categories.length > 0 ? categories[0].id : 1);
+      const primaryCatId = isTransfer
+        ? null
+        : (editIsSplit
+          ? editSplits[0].categoryId
+          : (editForm.categoryId || (categories.length > 0 ? categories[0].id : 1)));
+
+      const finalPayee = editForm.payee.trim() || editingTx.payee || 'Transfer';
 
       await db.execute(
         `UPDATE transactions 
@@ -411,7 +417,7 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
           editForm.accountId,
           primaryCatId,
           editForm.date,
-          editForm.payee.trim(),
+          finalPayee,
           finalAmount,
           editForm.memo || null,
           editingTx.id,
@@ -421,7 +427,7 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
       // 3. Handle splits:
       await db.execute('DELETE FROM transaction_splits WHERE transaction_id = ?', [editingTx.id]);
 
-      if (editIsSplit) {
+      if (editIsSplit && !isTransfer) {
         for (const s of editSplits) {
           const sAmt =
             editForm.txType === 'expense'
@@ -544,7 +550,8 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
           ? `${form.payee.trim()} (From: ${fromAcc?.name || 'Account'})`
           : `Transfer from ${fromAcc?.name || 'Account'}`;
 
-        const catId = form.categoryId || (categories.length > 0 ? categories[0].id : 1);
+        // Transfers do not require or use a category
+        const catId = null;
 
         // 1. Source account outflow
         await db.execute(
@@ -972,7 +979,7 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
 
             <div className="space-y-1 relative">
               <label className="text-xs font-bold text-slate-500 uppercase">
-                {txType === 'transfer' ? 'Payee / Note' : 'Payee'}
+                {txType === 'transfer' ? 'Payee / Description (Optional)' : 'Payee'}
               </label>
               <input
                 type="text"
@@ -988,7 +995,7 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
                   // Short timeout so click can register
                   setTimeout(() => setShowSuggestions(false), 200);
                 }}
-                placeholder={txType === 'transfer' ? 'Optional description' : 'e.g. Grocery Store'}
+                placeholder={txType === 'transfer' ? 'Optional (defaults to "Transfer to / from [Account]")' : 'e.g. Grocery Store'}
                 autoComplete="off"
               />
               {showSuggestions && payeeSuggestions.length > 0 && (
@@ -1269,9 +1276,20 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
                 {/* Bottom Row: Category & Quick Actions */}
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
                   <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 truncate max-w-[140px]">
-                      {t.category_name || 'General'}
-                    </span>
+                    {(() => {
+                      const isTxTransfer = isTransferPayee(t.payee) || !t.category_id;
+                      return (
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[11px] font-semibold truncate max-w-[140px] ${
+                            isTxTransfer
+                              ? 'bg-purple-50 text-purple-700 border border-purple-200/80'
+                              : 'bg-slate-100 text-slate-700'
+                          }`}
+                        >
+                          {isTxTransfer ? 'Transfer' : t.category_name || 'General'}
+                        </span>
+                      );
+                    })()}
                     {hasSplits && (
                       <button
                         type="button"
@@ -1379,9 +1397,20 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
                       </td>
                       <td className="px-6 py-4 text-slate-600">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-                            {t.category_name || 'General'}
-                          </span>
+                          {(() => {
+                            const isTxTransfer = isTransferPayee(t.payee) || !t.category_id;
+                            return (
+                              <span
+                                className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                  isTxTransfer
+                                    ? 'bg-purple-50 text-purple-700 border border-purple-200/80'
+                                    : 'bg-slate-100 text-slate-700'
+                                }`}
+                              >
+                                {isTxTransfer ? 'Transfer' : t.category_name || 'General'}
+                              </span>
+                            );
+                          })()}
                           {hasSplits && (
                             <button
                               type="button"
@@ -1738,38 +1767,40 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
                 </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !editIsSplit;
-                  setEditIsSplit(next);
-                  if (next && editSplits.length === 0) {
-                    const defaultCatId = editForm.categoryId || categories[0]?.id || 0;
-                    setEditSplits([
-                      {
-                        categoryId: defaultCatId,
-                        amount: editForm.amount ? (parseFloat(editForm.amount) / 2).toFixed(2) : '',
-                        memo: '',
-                      },
-                      {
-                        categoryId: defaultCatId,
-                        amount: editForm.amount
-                          ? (parseFloat(editForm.amount) - parseFloat(editForm.amount) / 2).toFixed(2)
-                          : '',
-                        memo: '',
-                      },
-                    ]);
-                  }
-                }}
-                className={`px-3 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all border ${
-                  editIsSplit
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                    : 'bg-white text-slate-600 hover:text-indigo-600 border-slate-200'
-                }`}
-              >
-                <Split size={14} />
-                {editIsSplit ? 'Split Enabled' : 'Split Across Categories'}
-              </button>
+              {!(Boolean(editingTx && (isTransferPayee(editingTx.payee) || isTransferPayee(editForm.payee) || !editingTx.category_id))) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !editIsSplit;
+                    setEditIsSplit(next);
+                    if (next && editSplits.length === 0) {
+                      const defaultCatId = editForm.categoryId || categories[0]?.id || 0;
+                      setEditSplits([
+                        {
+                          categoryId: defaultCatId,
+                          amount: editForm.amount ? (parseFloat(editForm.amount) / 2).toFixed(2) : '',
+                          memo: '',
+                        },
+                        {
+                          categoryId: defaultCatId,
+                          amount: editForm.amount
+                            ? (parseFloat(editForm.amount) - parseFloat(editForm.amount) / 2).toFixed(2)
+                            : '',
+                          memo: '',
+                        },
+                      ]);
+                    }
+                  }}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all border ${
+                    editIsSplit
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-white text-slate-600 hover:text-indigo-600 border-slate-200'
+                  }`}
+                >
+                  <Split size={14} />
+                  {editIsSplit ? 'Split Enabled' : 'Split Across Categories'}
+                </button>
+              )}
             </div>
 
             {/* Main Fields Grid */}
@@ -1812,7 +1843,15 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
                 />
               </div>
 
-              {editIsSplit ? (
+              {Boolean(editingTx && (isTransferPayee(editingTx.payee) || isTransferPayee(editForm.payee) || !editingTx.category_id)) ? (
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Category</label>
+                  <div className="px-3 py-2 bg-purple-50 border border-purple-200 rounded-xl text-xs font-bold text-purple-700 flex items-center gap-1.5">
+                    <ArrowRightLeft size={13} />
+                    <span>None (Internal Transfer)</span>
+                  </div>
+                </div>
+              ) : editIsSplit ? (
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-indigo-600 uppercase flex items-center gap-1">
                     <Split size={12} /> Category
@@ -1846,7 +1885,11 @@ const TransactionsPage = ({ proStatus = false, onTriggerUpgrade, initialAccountI
               )}
 
               <div className="space-y-1 relative md:col-span-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">Payee / Description</label>
+                <label className="text-xs font-bold text-slate-500 uppercase">
+                  {Boolean(editingTx && (isTransferPayee(editingTx.payee) || isTransferPayee(editForm.payee) || !editingTx.category_id))
+                    ? 'Payee / Description (Optional)'
+                    : 'Payee / Description'}
+                </label>
                 <input
                   type="text"
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm"

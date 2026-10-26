@@ -34,7 +34,7 @@ export async function initDb() {
     CREATE TABLE IF NOT EXISTS transactions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       account_id INTEGER NOT NULL,
-      category_id INTEGER NOT NULL,
+      category_id INTEGER,
       date TEXT NOT NULL,
       payee TEXT NOT NULL,
       amount REAL NOT NULL,
@@ -48,7 +48,7 @@ export async function initDb() {
     CREATE TABLE IF NOT EXISTS scheduled_transactions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       account_id INTEGER NOT NULL,
-      category_id INTEGER NOT NULL,
+      category_id INTEGER,
       amount REAL NOT NULL,
       frequency TEXT NOT NULL,
       next_date TEXT NOT NULL,
@@ -136,6 +136,90 @@ export async function initDb() {
   // Normalize scheduled transaction amounts to positive magnitudes (direction is determined by `type`)
   try { await db.execute('UPDATE scheduled_transactions SET amount = ABS(amount) WHERE amount < 0'); } catch (e) {}
   try { await db.execute('UPDATE scheduled_transaction_overrides SET amount = ABS(amount) WHERE amount < 0'); } catch (e) {}
+
+  // Migrate transactions.category_id to be nullable if currently NOT NULL
+  try {
+    const tableInfo = (await db.select('PRAGMA table_info(transactions)')) as any[];
+    const catCol = tableInfo.find((c) => c.name === 'category_id');
+    if (catCol && catCol.notnull === 1) {
+      await db.execute('PRAGMA foreign_keys = OFF');
+      await db.execute(`
+        CREATE TABLE transactions_nullable_cat (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          account_id INTEGER NOT NULL,
+          category_id INTEGER,
+          date TEXT NOT NULL,
+          payee TEXT NOT NULL,
+          amount REAL NOT NULL,
+          memo TEXT,
+          status TEXT DEFAULT 'cleared',
+          FOREIGN KEY (account_id) REFERENCES accounts(id),
+          FOREIGN KEY (category_id) REFERENCES categories(id)
+        )
+      `);
+      await db.execute(`
+        INSERT INTO transactions_nullable_cat (id, account_id, category_id, date, payee, amount, memo, status)
+        SELECT id, account_id, category_id, date, payee, amount, memo, COALESCE(status, 'cleared') FROM transactions
+      `);
+      await db.execute('DROP TABLE transactions');
+      await db.execute('ALTER TABLE transactions_nullable_cat RENAME TO transactions');
+      await db.execute('PRAGMA foreign_keys = ON');
+    }
+  } catch (e) {
+    console.warn('Migration for transactions category_id nullable failed:', e);
+  }
+
+  // Migrate scheduled_transactions.category_id to be nullable if currently NOT NULL
+  try {
+    const tableInfo = (await db.select('PRAGMA table_info(scheduled_transactions)')) as any[];
+    const catCol = tableInfo.find((c) => c.name === 'category_id');
+    if (catCol && catCol.notnull === 1) {
+      await db.execute('PRAGMA foreign_keys = OFF');
+      await db.execute(`
+        CREATE TABLE scheduled_transactions_nullable_cat (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          account_id INTEGER NOT NULL,
+          category_id INTEGER,
+          amount REAL NOT NULL,
+          frequency TEXT NOT NULL,
+          next_date TEXT NOT NULL,
+          payee TEXT,
+          type TEXT,
+          to_account_id INTEGER,
+          FOREIGN KEY (account_id) REFERENCES accounts(id),
+          FOREIGN KEY (category_id) REFERENCES categories(id)
+        )
+      `);
+      await db.execute(`
+        INSERT INTO scheduled_transactions_nullable_cat (id, account_id, category_id, amount, frequency, next_date, payee, type, to_account_id)
+        SELECT id, account_id, category_id, amount, frequency, next_date, payee, type, to_account_id FROM scheduled_transactions
+      `);
+      await db.execute('DROP TABLE scheduled_transactions');
+      await db.execute('ALTER TABLE scheduled_transactions_nullable_cat RENAME TO scheduled_transactions');
+      await db.execute('PRAGMA foreign_keys = ON');
+    }
+  } catch (e) {
+    console.warn('Migration for scheduled_transactions category_id nullable failed:', e);
+  }
+
+  // Clean up existing transfer transactions and scheduled transfers to set category_id to NULL
+  try {
+    await db.execute(`
+      UPDATE transactions 
+      SET category_id = NULL 
+      WHERE payee LIKE 'Transfer to %' 
+         OR payee LIKE 'Transfer from %' 
+         OR payee LIKE '%(To: %' 
+         OR payee LIKE '%(From: %'
+    `);
+    await db.execute(`
+      UPDATE scheduled_transactions 
+      SET category_id = NULL 
+      WHERE type = 'transfer'
+    `);
+  } catch (e) {
+    console.warn('Cleanup of transfer category_id failed:', e);
+  }
 
   // Ensure default categories exist if categories table is empty
   try {

@@ -1370,15 +1370,25 @@ const Dashboard = ({
                 <div className="flex items-center gap-3">
                   <div
                     className={`p-2 rounded-xl ${
-                      tx.amount < 0 ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'
+                      isTransferPayee(tx.payee) || !tx.category_id
+                        ? 'bg-purple-50 text-purple-600'
+                        : tx.amount < 0
+                        ? 'bg-red-50 text-red-500'
+                        : 'bg-green-50 text-green-600'
                     }`}
                   >
-                    {tx.amount < 0 ? <ArrowDownCircle size={18} /> : <ArrowUpCircle size={18} />}
+                    {isTransferPayee(tx.payee) || !tx.category_id ? (
+                      <ArrowRightLeft size={18} />
+                    ) : tx.amount < 0 ? (
+                      <ArrowDownCircle size={18} />
+                    ) : (
+                      <ArrowUpCircle size={18} />
+                    )}
                   </div>
                   <div>
                     <p className="font-semibold text-slate-800">{tx.payee}</p>
                     <p className="text-xs text-slate-400">
-                      {formatDate(tx.date)} • {tx.account_name} • {tx.category_name || 'General'}
+                      {formatDate(tx.date)} • {tx.account_name} • {isTransferPayee(tx.payee) || !tx.category_id ? 'Transfer' : (tx.category_name || 'General')}
                     </p>
                   </div>
                 </div>

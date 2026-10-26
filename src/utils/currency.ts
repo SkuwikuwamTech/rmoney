@@ -283,11 +283,16 @@ export function getLocalTodayStr(daysOffset: number = 0): string {
 export function isTransferPayee(payee?: string | null): boolean {
   if (!payee) return false;
   const p = payee.trim();
+  const lower = p.toLowerCase();
   return (
     p.startsWith('Transfer to ') ||
     p.startsWith('Transfer from ') ||
     p.includes(' (To: ') ||
     p.includes(' (From: ') ||
+    lower === 'transfer' ||
+    lower.startsWith('transfer:') ||
+    lower.startsWith('transfer -') ||
+    lower === 'internal transfer' ||
     p === 'Opening Balance'
   );
 }

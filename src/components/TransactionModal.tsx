@@ -134,8 +134,8 @@ const TransactionModal = ({
           ? `${payee.trim()} (From: ${fromAcc?.name || 'Account'})`
           : `Transfer from ${fromAcc?.name || 'Account'}`;
 
-        // Fallback or transfer category
-        const catId = categoryId || 1;
+        // Transfers do not require or use a category
+        const catId = null;
 
         // 1. Source Account: Outgoing (-)
         const resOut = await db.execute(
@@ -327,12 +327,12 @@ const TransactionModal = ({
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-slate-500 uppercase">
-              {modalType === 'transfer' ? 'Description (Optional)' : 'Payee / Description'}
+              {modalType === 'transfer' ? 'Payee / Description (Optional)' : 'Payee / Description'}
             </label>
             <input
               type="text"
               placeholder={
-                modalType === 'transfer' ? 'e.g. Monthly Savings Transfer' : 'Who was this for or from?'
+                modalType === 'transfer' ? 'Optional (defaults to "Transfer to / from [Account]")' : 'Who was this for or from?'
               }
               className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               value={payee}

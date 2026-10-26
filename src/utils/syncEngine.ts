@@ -318,7 +318,7 @@ export async function mergeSyncBundle(remotePayload: SyncPayload): Promise<Merge
     const remoteFpCounts = new Map<string, number>();
     for (const remTx of remotePayload.transactions || []) {
       const mappedAccId = accountMap.get(remTx.account_id) || remTx.account_id;
-      const mappedCatId = categoryMap.get(remTx.category_id) || remTx.category_id;
+      const mappedCatId = remTx.category_id ? (categoryMap.get(remTx.category_id) || remTx.category_id) : null;
       const baseFp = `${remTx.date}|${remTx.payee.trim().toLowerCase()}|${Number(remTx.amount).toFixed(2)}|${mappedAccId}`;
       const occIdx = remoteFpCounts.get(baseFp) || 0;
       remoteFpCounts.set(baseFp, occIdx + 1);
@@ -354,7 +354,7 @@ export async function mergeSyncBundle(remotePayload: SyncPayload): Promise<Merge
         const localScheduled = (await db.select('SELECT * FROM scheduled_transactions')) as ScheduledTransaction[];
         for (const remSt of remotePayload.scheduledTransactions) {
           const mappedAccId = accountMap.get(remSt.account_id) || remSt.account_id;
-          const mappedCatId = categoryMap.get(remSt.category_id) || remSt.category_id;
+          const mappedCatId = remSt.category_id ? (categoryMap.get(remSt.category_id) || remSt.category_id) : null;
           const mappedToAccId = remSt.to_account_id ? accountMap.get(remSt.to_account_id) || remSt.to_account_id : null;
           const match = localScheduled.find(
             (ls) =>
