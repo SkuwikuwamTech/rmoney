@@ -819,17 +819,21 @@ WARNING: This will replace your current data with the contents of this backup fi
       if (Array.isArray(data.scheduled_transactions)) {
         for (const st of data.scheduled_transactions) {
           await db.execute(
-            'INSERT INTO scheduled_transactions (id, account_id, category_id, amount, frequency, next_date, payee, type, to_account_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO scheduled_transactions (id, account_id, category_id, amount, frequency, next_date, payee, type, to_account_id, is_closed_ended, remaining_count, end_date, auto_enter_days) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
               st.id,
               st.account_id,
-              st.category_id || 1,
+              st.category_id ?? null,
               Math.abs(st.amount),
               st.frequency || 'monthly',
               st.next_date,
               st.payee,
               st.type || 'expense',
               st.to_account_id || null,
+              st.is_closed_ended ? 1 : 0,
+              st.remaining_count ?? null,
+              st.end_date || null,
+              st.auto_enter_days ?? null,
             ]
           );
         }

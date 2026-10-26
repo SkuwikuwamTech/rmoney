@@ -14,6 +14,7 @@ import {
   List,
   ChevronLeft,
   ChevronRight,
+  Hourglass,
 } from 'lucide-react';
 import { getDb } from '../utils/db';
 import { ScheduledTransaction, Account, Category, ScheduledTransactionOverride } from '../types';
@@ -45,6 +46,121 @@ function calculateNextDate(currentDateStr: string, frequency: string): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function calculateFinalDate(startDateStr: string, frequency: string, count: number): string {
+  if (!startDateStr || count <= 1 || frequency === 'once') return startDateStr;
+  let cur = startDateStr;
+  for (let i = 1; i < count; i++) {
+    cur = calculateNextDate(cur, frequency);
+  }
+  return cur;
+}
+
+function calculateRemainingOccurrences(startDateStr: string, frequency: string, endDateStr: string): number {
+  if (!startDateStr || !endDateStr || endDateStr < startDateStr) return 1;
+  if (frequency === 'once') return 1;
+  let count = 1;
+  let cur = startDateStr;
+  while (count < 1000) {
+    const next = calculateNextDate(cur, frequency);
+    if (next > endDateStr) break;
+    cur = next;
+    count++;
+  }
+  return count;
+}
+
+async function executePostScheduledBill(
+  db: any,
+  bill: ScheduledTransaction,
+  postDate: string,
+  amount: number,
+  payee: string,
+  accountId: number,
+  toAccountId: number,
+  categoryId: number,
+  memo: string,
+  accounts: Account[]
+): Promise<{ isCompleted: boolean }> {
+  const catId = bill.type === 'transfer' ? null : (categoryId || null);
+
+  if (bill.type === 'transfer') {
+    const toAccId = toAccountId || bill.to_account_id;
+    if (!toAccId || toAccId === accountId) {
+      throw new Error('Invalid destination account for transfer.');
+    }
+    const fromAcc = accounts.find((a) => a.id === accountId);
+    const toAcc = accounts.find((a) => a.id === toAccId);
+
+    const cleanPayee = payee?.trim() || '';
+    const payeeOut = cleanPayee
+      ? (cleanPayee.includes('(To:') ? cleanPayee : `${cleanPayee} (To: ${toAcc?.name || 'Account'})`)
+      : `Transfer to ${toAcc?.name || 'Account'}`;
+    const payeeIn = cleanPayee
+      ? (cleanPayee.includes('(From:') ? cleanPayee : `${cleanPayee} (From: ${fromAcc?.name || 'Account'})`)
+      : `Transfer from ${fromAcc?.name || 'Account'}`;
+
+    await db.execute(
+      'INSERT INTO transactions (account_id, category_id, date, payee, amount, memo) VALUES (?, ?, ?, ?, ?, ?)',
+      [accountId, catId, postDate, payeeOut, -Math.abs(amount), memo]
+    );
+    await db.execute('UPDATE accounts SET balance = balance - ? WHERE id = ?', [
+      Math.abs(amount),
+      accountId,
+    ]);
+
+    await db.execute(
+      'INSERT INTO transactions (account_id, category_id, date, payee, amount, memo) VALUES (?, ?, ?, ?, ?, ?)',
+      [toAccId, catId, postDate, payeeIn, Math.abs(amount), memo]
+    );
+    await db.execute('UPDATE accounts SET balance = balance + ? WHERE id = ?', [
+      Math.abs(amount),
+      toAccId,
+    ]);
+  } else {
+    const finalAmount = bill.type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
+    await db.execute(
+      'INSERT INTO transactions (account_id, category_id, date, payee, amount, memo) VALUES (?, ?, ?, ?, ?, ?)',
+      [accountId, catId, postDate, payee, finalAmount, memo]
+    );
+    await db.execute('UPDATE accounts SET balance = balance + ? WHERE id = ?', [
+      finalAmount,
+      accountId,
+    ]);
+  }
+
+  // Clear any instance override for this date
+  await db.execute(
+    'DELETE FROM scheduled_transaction_overrides WHERE scheduled_id = ? AND (original_date = ? OR date = ?)',
+    [bill.id, bill.next_date, bill.next_date]
+  );
+
+  // Check if one-time or closed-ended series has ended
+  if (bill.frequency === 'once') {
+    await db.execute('DELETE FROM scheduled_transactions WHERE id = ?', [bill.id]);
+    return { isCompleted: true };
+  } else {
+    const newNextDate = calculateNextDate(bill.next_date, bill.frequency);
+    const newRemaining = bill.remaining_count != null ? bill.remaining_count - 1 : null;
+    const isClosedEnded = Boolean(bill.is_closed_ended || bill.remaining_count != null || bill.end_date);
+
+    const isEnded = isClosedEnded && (
+      (newRemaining !== null && newRemaining <= 0) ||
+      Boolean(bill.end_date && newNextDate > bill.end_date)
+    );
+
+    if (isEnded) {
+      await db.execute('DELETE FROM scheduled_transactions WHERE id = ?', [bill.id]);
+      return { isCompleted: true };
+    } else {
+      await db.execute(
+        'UPDATE scheduled_transactions SET next_date = ?, remaining_count = ? WHERE id = ?',
+        [newNextDate, newRemaining, bill.id]
+      );
+      return { isCompleted: false };
+    }
+  }
 }
 
 const BillsPage = () => {
@@ -83,6 +199,11 @@ const BillsPage = () => {
     categoryId: 0,
     type: 'expense' as 'income' | 'expense' | 'transfer',
     toAccountId: '' as string,
+    autoEnterEnabled: false,
+    autoEnterDays: 3,
+    isClosedEnded: false,
+    remainingCount: '' as string | number,
+    endDate: '',
   });
 
   // Form State for Instance-Only Editing
@@ -138,6 +259,47 @@ const BillsPage = () => {
       const accountsResult = (await db.select('SELECT * FROM accounts ORDER BY name ASC')) as Account[];
       const categoriesResult = (await db.select('SELECT * FROM categories ORDER BY name ASC')) as Category[];
 
+      // Check for auto-entering bills
+      const todayStr = getLocalTodayStr(0);
+      let autoEnteredCount = 0;
+      for (const bill of billsWithOverrides) {
+        if (bill.auto_enter_days != null && bill.auto_enter_days >= 0) {
+          const parts = bill.next_date.split('-').map(Number);
+          const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+          dt.setDate(dt.getDate() - bill.auto_enter_days);
+          const y = dt.getFullYear();
+          const m = String(dt.getMonth() + 1).padStart(2, '0');
+          const d = String(dt.getDate()).padStart(2, '0');
+          const triggerDate = `${y}-${m}-${d}`;
+
+          if (todayStr >= triggerDate) {
+            const ov = overrideMap.get(`${bill.id}_${bill.next_date}`);
+            const effDate = ov?.new_date || bill.next_date;
+            const effAmt = ov?.amount != null ? Math.abs(ov.amount) : bill.amount;
+            const effPayee = ov?.payee || bill.payee || '';
+            const effAccId = ov?.account_id || bill.account_id;
+
+            await executePostScheduledBill(
+              db,
+              bill,
+              effDate,
+              effAmt,
+              effPayee,
+              effAccId,
+              bill.to_account_id || 0,
+              bill.category_id || 0,
+              'Automatically entered into register',
+              accountsResult
+            );
+            autoEnteredCount++;
+          }
+        }
+      }
+
+      if (autoEnteredCount > 0) {
+        return await loadData();
+      }
+
       setBills(billsWithOverrides);
       setAccounts(accountsResult);
       setCategories(categoriesResult);
@@ -190,10 +352,16 @@ const BillsPage = () => {
       const catId = isTransfer ? null : (form.categoryId || (categories.length > 0 ? categories[0].id : 1));
       const effectivePayee = form.payee.trim() || (isTransfer ? `Transfer to ${toAcc?.name || 'Account'}` : 'Scheduled Transaction');
 
+      const isClosedEnded = form.frequency !== 'once' && form.isClosedEnded ? 1 : 0;
+      const remainingCount = isClosedEnded && form.remainingCount ? parseInt(String(form.remainingCount)) : null;
+      const endDate = isClosedEnded && form.endDate ? form.endDate : null;
+      const autoEnterDays = form.frequency !== 'once' && form.autoEnterEnabled ? parseInt(String(form.autoEnterDays ?? 0)) : null;
+
       if (editingBill) {
         await db.execute(
           `UPDATE scheduled_transactions 
-           SET account_id = ?, category_id = ?, amount = ?, frequency = ?, next_date = ?, payee = ?, type = ?, to_account_id = ? 
+           SET account_id = ?, category_id = ?, amount = ?, frequency = ?, next_date = ?, payee = ?, type = ?, to_account_id = ?,
+               is_closed_ended = ?, remaining_count = ?, end_date = ?, auto_enter_days = ?
            WHERE id = ?`,
           [
             form.accountId,
@@ -204,13 +372,20 @@ const BillsPage = () => {
             effectivePayee,
             form.type,
             toAccId,
+            isClosedEnded,
+            remainingCount,
+            endDate,
+            autoEnterDays,
             editingBill.id,
           ]
         );
         setEditingBill(null);
       } else {
         await db.execute(
-          'INSERT INTO scheduled_transactions (account_id, category_id, amount, frequency, next_date, payee, type, to_account_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          `INSERT INTO scheduled_transactions (
+            account_id, category_id, amount, frequency, next_date, payee, type, to_account_id,
+            is_closed_ended, remaining_count, end_date, auto_enter_days
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             form.accountId,
             catId,
@@ -220,6 +395,10 @@ const BillsPage = () => {
             effectivePayee,
             form.type,
             toAccId,
+            isClosedEnded,
+            remainingCount,
+            endDate,
+            autoEnterDays,
           ]
         );
         setIsAdding(false);
@@ -229,11 +408,16 @@ const BillsPage = () => {
         payee: '',
         amount: '',
         frequency: 'monthly',
-        nextDate: new Date().toISOString().split('T')[0],
+        nextDate: getLocalTodayStr(0),
         accountId: accounts.length > 0 ? accounts[0].id : 0,
         categoryId: categories.length > 0 ? categories[0].id : 0,
         type: 'expense',
         toAccountId: '',
+        autoEnterEnabled: false,
+        autoEnterDays: 3,
+        isClosedEnded: false,
+        remainingCount: '',
+        endDate: '',
       });
       await loadData();
     } catch (e) {
@@ -309,6 +493,11 @@ const BillsPage = () => {
       categoryId: bill.category_id || 0,
       type: bill.type,
       toAccountId: bill.to_account_id ? String(bill.to_account_id) : '',
+      autoEnterEnabled: bill.auto_enter_days != null,
+      autoEnterDays: bill.auto_enter_days != null ? bill.auto_enter_days : 3,
+      isClosedEnded: Boolean(bill.is_closed_ended || bill.remaining_count != null || bill.end_date),
+      remainingCount: bill.remaining_count != null ? String(bill.remaining_count) : '',
+      endDate: bill.end_date || '',
     });
     setInstanceForm({
       date: bill.effective_date || bill.next_date,
@@ -341,85 +530,28 @@ const BillsPage = () => {
 
     try {
       const db = await getDb();
-      const bill = postingBill.bill;
-      const catId = bill.type === 'transfer' ? null : (postingBill.categoryId || 1);
-      const postDate = postingBill.date;
-
-      if (bill.type === 'transfer') {
-        const toAccId = postingBill.toAccountId || bill.to_account_id;
-        if (!toAccId || toAccId === postingBill.accountId) {
-          alert('Cannot post transfer: invalid destination account.');
-          return;
-        }
-
-        const fromAcc = accounts.find((a) => a.id === postingBill.accountId);
-        const toAcc = accounts.find((a) => a.id === toAccId);
-
-        const cleanPayee = postingBill.payee?.trim() || '';
-        const payeeOut = cleanPayee
-          ? (cleanPayee.includes('(To:') ? cleanPayee : `${cleanPayee} (To: ${toAcc?.name || 'Account'})`)
-          : `Transfer to ${toAcc?.name || 'Account'}`;
-        const payeeIn = cleanPayee
-          ? (cleanPayee.includes('(From:') ? cleanPayee : `${cleanPayee} (From: ${fromAcc?.name || 'Account'})`)
-          : `Transfer from ${fromAcc?.name || 'Account'}`;
-
-        // 1. Source Account outflow
-        await db.execute(
-          'INSERT INTO transactions (account_id, category_id, date, payee, amount, memo) VALUES (?, ?, ?, ?, ?, ?)',
-          [postingBill.accountId, catId, postDate, payeeOut, -Math.abs(numAmount), postingBill.memo]
-        );
-        await db.execute('UPDATE accounts SET balance = balance - ? WHERE id = ?', [
-          Math.abs(numAmount),
-          postingBill.accountId,
-        ]);
-
-        // 2. Destination Account inflow
-        await db.execute(
-          'INSERT INTO transactions (account_id, category_id, date, payee, amount, memo) VALUES (?, ?, ?, ?, ?, ?)',
-          [toAccId, catId, postDate, payeeIn, Math.abs(numAmount), postingBill.memo]
-        );
-        await db.execute('UPDATE accounts SET balance = balance + ? WHERE id = ?', [
-          Math.abs(numAmount),
-          toAccId,
-        ]);
-      } else {
-        const finalAmount = bill.type === 'expense' ? -Math.abs(numAmount) : Math.abs(numAmount);
-
-        // 1. Insert transaction
-        await db.execute(
-          'INSERT INTO transactions (account_id, category_id, date, payee, amount, memo) VALUES (?, ?, ?, ?, ?, ?)',
-          [postingBill.accountId, catId, postDate, postingBill.payee, finalAmount, postingBill.memo]
-        );
-
-        // 2. Update account balance
-        await db.execute('UPDATE accounts SET balance = balance + ? WHERE id = ?', [
-          finalAmount,
-          postingBill.accountId,
-        ]);
-      }
-
-      // 3. Clear any instance override for this date
-      await db.execute(
-        'DELETE FROM scheduled_transaction_overrides WHERE scheduled_id = ? AND (original_date = ? OR date = ?)',
-        [bill.id, bill.next_date, bill.next_date]
+      const res = await executePostScheduledBill(
+        db,
+        postingBill.bill,
+        postingBill.date,
+        numAmount,
+        postingBill.payee,
+        postingBill.accountId,
+        postingBill.toAccountId,
+        postingBill.categoryId,
+        postingBill.memo,
+        accounts
       );
-
-      // 4. Advance next_date or remove if one-time
-      if (bill.frequency === 'once') {
-        await db.execute('DELETE FROM scheduled_transactions WHERE id = ?', [bill.id]);
-      } else {
-        const newNextDate = calculateNextDate(bill.next_date, bill.frequency);
-        await db.execute('UPDATE scheduled_transactions SET next_date = ? WHERE id = ?', [
-          newNextDate,
-          bill.id,
-        ]);
-      }
 
       setPostingBill(null);
       await loadData();
-    } catch (e) {
+
+      if (res.isCompleted) {
+        alert('This closed-ended series has ended! The final payment has been entered into your register.');
+      }
+    } catch (e: any) {
       console.error('Error posting bill:', e);
-      alert('Failed to post scheduled transaction.');
+      alert(e?.message || 'Failed to post scheduled transaction.');
     }
   };
 
@@ -599,12 +731,18 @@ const BillsPage = () => {
               <select
                 className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
                 value={form.frequency}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const freq = e.target.value as 'once' | 'daily' | 'weekly' | 'bi-weekly' | 'monthly' | 'yearly';
+                  let newEnd = form.endDate;
+                  if (form.isClosedEnded && form.remainingCount && freq !== 'once') {
+                    newEnd = calculateFinalDate(form.nextDate, freq, Number(form.remainingCount));
+                  }
                   setForm({
                     ...form,
-                    frequency: e.target.value as 'once' | 'daily' | 'weekly' | 'bi-weekly' | 'monthly' | 'yearly',
-                  })
-                }
+                    frequency: freq,
+                    endDate: newEnd,
+                  });
+                }}
               >
                 <option value="once">One-Time (On Due Date)</option>
                 <option value="daily">Daily</option>
@@ -621,7 +759,14 @@ const BillsPage = () => {
                 type="date"
                 className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 value={form.nextDate}
-                onChange={(e) => setForm({ ...form, nextDate: e.target.value })}
+                onChange={(e) => {
+                  const dt = e.target.value;
+                  let newEnd = form.endDate;
+                  if (form.isClosedEnded && form.remainingCount && form.frequency !== 'once') {
+                    newEnd = calculateFinalDate(dt, form.frequency, Number(form.remainingCount));
+                  }
+                  setForm({ ...form, nextDate: dt, endDate: newEnd });
+                }}
               />
             </div>
 
@@ -674,6 +819,108 @@ const BillsPage = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+            )}
+
+            {/* Advanced Series Options: Auto-enter & Closed-Ended Bills */}
+            {form.frequency !== 'once' && (
+              <div className="md:col-span-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3.5">
+                {/* Auto Enter Checkbox */}
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 select-none">
+                    <input
+                      type="checkbox"
+                      checked={form.autoEnterEnabled}
+                      onChange={(e) => setForm({ ...form, autoEnterEnabled: e.target.checked })}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
+                    />
+                    <span>Automatically enter transaction into my register the following number of days before the payment date:</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="60"
+                    disabled={!form.autoEnterEnabled}
+                    value={form.autoEnterDays}
+                    onChange={(e) => setForm({ ...form, autoEnterDays: parseInt(e.target.value) || 0 })}
+                    className="w-16 px-2 py-1 text-center font-bold text-xs border border-slate-200 rounded-lg bg-white disabled:opacity-40 disabled:bg-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Closed-Ended Bill Checkbox */}
+                <div className="space-y-2.5 pt-1 border-t border-slate-200/70">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 select-none">
+                    <input
+                      type="checkbox"
+                      checked={form.isClosedEnded}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        if (checked) {
+                          const initialCount = form.remainingCount ? Number(form.remainingCount) : 12;
+                          const calculatedEnd = calculateFinalDate(form.nextDate, form.frequency, initialCount);
+                          setForm({
+                            ...form,
+                            isClosedEnded: true,
+                            remainingCount: initialCount,
+                            endDate: calculatedEnd,
+                          });
+                        } else {
+                          setForm({ ...form, isClosedEnded: false });
+                        }
+                      }}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
+                    />
+                    <span>This series will end at some point in time (closed-ended bill)</span>
+                  </label>
+
+                  {form.isClosedEnded && (
+                    <div className="pl-6 flex flex-wrap items-center gap-6 pt-1 animate-in fade-in duration-150">
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-semibold text-slate-600">
+                          Number of transactions remaining:
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="999"
+                          value={form.remainingCount}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const count = parseInt(val);
+                            if (!isNaN(count) && count > 0) {
+                              const calcEnd = calculateFinalDate(form.nextDate, form.frequency, count);
+                              setForm({ ...form, remainingCount: val, endDate: calcEnd });
+                            } else {
+                              setForm({ ...form, remainingCount: val });
+                            }
+                          }}
+                          placeholder="e.g. 12"
+                          className="w-20 px-2.5 py-1 text-center font-bold text-xs border border-slate-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-semibold text-slate-600">
+                          Date of final transaction:
+                        </label>
+                        <input
+                          type="date"
+                          value={form.endDate}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val && val >= form.nextDate) {
+                              const calcCount = calculateRemainingOccurrences(form.nextDate, form.frequency, val);
+                              setForm({ ...form, endDate: val, remainingCount: calcCount });
+                            } else {
+                              setForm({ ...form, endDate: val });
+                            }
+                          }}
+                          className="px-2.5 py-1 text-xs font-medium border border-slate-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -849,12 +1096,18 @@ const BillsPage = () => {
                     <select
                       className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
                       value={form.frequency}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const freq = e.target.value as 'once' | 'daily' | 'weekly' | 'bi-weekly' | 'monthly' | 'yearly';
+                        let newEnd = form.endDate;
+                        if (form.isClosedEnded && form.remainingCount && freq !== 'once') {
+                          newEnd = calculateFinalDate(form.nextDate, freq, Number(form.remainingCount));
+                        }
                         setForm({
                           ...form,
-                          frequency: e.target.value as 'once' | 'daily' | 'weekly' | 'bi-weekly' | 'monthly' | 'yearly',
-                        })
-                      }
+                          frequency: freq,
+                          endDate: newEnd,
+                        });
+                      }}
                     >
                       <option value="once">One-Time (On Due Date)</option>
                       <option value="daily">Daily</option>
@@ -871,7 +1124,14 @@ const BillsPage = () => {
                       type="date"
                       className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                       value={form.nextDate}
-                      onChange={(e) => setForm({ ...form, nextDate: e.target.value })}
+                      onChange={(e) => {
+                        const dt = e.target.value;
+                        let newEnd = form.endDate;
+                        if (form.isClosedEnded && form.remainingCount && form.frequency !== 'once') {
+                          newEnd = calculateFinalDate(dt, form.frequency, Number(form.remainingCount));
+                        }
+                        setForm({ ...form, nextDate: dt, endDate: newEnd });
+                      }}
                     />
                   </div>
                 </div>
@@ -929,6 +1189,108 @@ const BillsPage = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Advanced Series Options: Auto-enter & Closed-Ended Bills */}
+                {form.frequency !== 'once' && (
+                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                    {/* Auto Enter Checkbox */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 select-none">
+                        <input
+                          type="checkbox"
+                          checked={form.autoEnterEnabled}
+                          onChange={(e) => setForm({ ...form, autoEnterEnabled: e.target.checked })}
+                          className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
+                        />
+                        <span>Automatically enter transaction into register days before:</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="60"
+                        disabled={!form.autoEnterEnabled}
+                        value={form.autoEnterDays}
+                        onChange={(e) => setForm({ ...form, autoEnterDays: parseInt(e.target.value) || 0 })}
+                        className="w-14 px-2 py-0.5 text-center font-bold text-xs border border-slate-200 rounded-lg bg-white disabled:opacity-40 disabled:bg-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    {/* Closed-Ended Bill Checkbox */}
+                    <div className="space-y-2 pt-1 border-t border-slate-200/70">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 select-none">
+                        <input
+                          type="checkbox"
+                          checked={form.isClosedEnded}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            if (checked) {
+                              const initialCount = form.remainingCount ? Number(form.remainingCount) : 12;
+                              const calculatedEnd = calculateFinalDate(form.nextDate, form.frequency, initialCount);
+                              setForm({
+                                ...form,
+                                isClosedEnded: true,
+                                remainingCount: initialCount,
+                                endDate: calculatedEnd,
+                              });
+                            } else {
+                              setForm({ ...form, isClosedEnded: false });
+                            }
+                          }}
+                          className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
+                        />
+                        <span>This series will end at some point in time (closed-ended bill)</span>
+                      </label>
+
+                      {form.isClosedEnded && (
+                        <div className="pl-6 flex flex-wrap items-center gap-4 pt-1 animate-in fade-in duration-150">
+                          <div className="flex items-center gap-2">
+                            <label className="text-xs font-semibold text-slate-600">
+                              Remaining:
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="999"
+                              value={form.remainingCount}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const count = parseInt(val);
+                                if (!isNaN(count) && count > 0) {
+                                  const calcEnd = calculateFinalDate(form.nextDate, form.frequency, count);
+                                  setForm({ ...form, remainingCount: val, endDate: calcEnd });
+                                } else {
+                                  setForm({ ...form, remainingCount: val });
+                                }
+                              }}
+                              placeholder="e.g. 12"
+                              className="w-16 px-2 py-0.5 text-center font-bold text-xs border border-slate-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <label className="text-xs font-semibold text-slate-600">
+                              Final date:
+                            </label>
+                            <input
+                              type="date"
+                              value={form.endDate}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val && val >= form.nextDate) {
+                                  const calcCount = calculateRemainingOccurrences(form.nextDate, form.frequency, val);
+                                  setForm({ ...form, endDate: val, remainingCount: calcCount });
+                                } else {
+                                  setForm({ ...form, endDate: val });
+                                }
+                              }}
+                              className="px-2 py-0.5 text-xs font-medium border border-slate-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-2 pt-2">
                   <button
@@ -1311,9 +1673,17 @@ const BillsPage = () => {
                           </span>
                         )}
                       </div>
-                      <span className="capitalize font-semibold text-slate-500 text-[11px]">
-                        {bill.frequency === 'once' ? 'One-Time' : bill.frequency}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="capitalize font-semibold text-slate-500 text-[11px]">
+                          {bill.frequency === 'once' ? 'One-Time' : bill.frequency}
+                        </span>
+                        {Boolean(bill.is_closed_ended || bill.remaining_count != null || bill.end_date) && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80 inline-flex items-center gap-1">
+                            <Hourglass size={10} />
+                            <span>{bill.remaining_count != null ? `${bill.remaining_count} left` : 'Ends'} {bill.end_date ? `(Final: ${formatDate(bill.end_date)})` : ''}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Bottom Row: Actions */}
@@ -1439,14 +1809,24 @@ const BillsPage = () => {
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-slate-500 capitalize">
-                        {bill.frequency === 'once' ? (
-                          <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                            One-Time
+                      <td className="px-6 py-4 text-slate-500">
+                        <div className="space-y-0.5">
+                          <span className="capitalize block">
+                            {bill.frequency === 'once' ? (
+                              <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                One-Time
+                              </span>
+                            ) : (
+                              bill.frequency
+                            )}
                           </span>
-                        ) : (
-                          bill.frequency
-                        )}
+                          {Boolean(bill.is_closed_ended || bill.remaining_count != null || bill.end_date) && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80">
+                              <Hourglass size={10} />
+                              <span>{bill.remaining_count != null ? `${bill.remaining_count} left` : 'Ends'} {bill.end_date ? `(Final: ${formatDate(bill.end_date)})` : ''}</span>
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-slate-600 whitespace-nowrap">
                         <div className="flex items-center gap-1.5 font-medium text-slate-800">

@@ -55,6 +55,10 @@ export async function initDb() {
       payee TEXT,
       type TEXT,
       to_account_id INTEGER,
+      is_closed_ended BOOLEAN DEFAULT 0,
+      remaining_count INTEGER,
+      end_date TEXT,
+      auto_enter_days INTEGER,
       FOREIGN KEY (account_id) REFERENCES accounts(id),
       FOREIGN KEY (category_id) REFERENCES categories(id)
     );
@@ -129,6 +133,10 @@ export async function initDb() {
   try { await db.execute('ALTER TABLE scheduled_transactions ADD COLUMN payee TEXT'); } catch (e) {}
   try { await db.execute('ALTER TABLE scheduled_transactions ADD COLUMN type TEXT'); } catch (e) {}
   try { await db.execute('ALTER TABLE scheduled_transactions ADD COLUMN to_account_id INTEGER'); } catch (e) {}
+  try { await db.execute('ALTER TABLE scheduled_transactions ADD COLUMN is_closed_ended BOOLEAN DEFAULT 0'); } catch (e) {}
+  try { await db.execute('ALTER TABLE scheduled_transactions ADD COLUMN remaining_count INTEGER'); } catch (e) {}
+  try { await db.execute('ALTER TABLE scheduled_transactions ADD COLUMN end_date TEXT'); } catch (e) {}
+  try { await db.execute('ALTER TABLE scheduled_transactions ADD COLUMN auto_enter_days INTEGER'); } catch (e) {}
   try { await db.execute('ALTER TABLE scheduled_transaction_overrides ADD COLUMN original_date TEXT'); } catch (e) {}
   try { await db.execute('ALTER TABLE scheduled_transaction_overrides ADD COLUMN new_date TEXT'); } catch (e) {}
   try { await db.execute('UPDATE scheduled_transaction_overrides SET original_date = date WHERE original_date IS NULL'); } catch (e) {}
@@ -186,13 +194,17 @@ export async function initDb() {
           payee TEXT,
           type TEXT,
           to_account_id INTEGER,
+          is_closed_ended BOOLEAN DEFAULT 0,
+          remaining_count INTEGER,
+          end_date TEXT,
+          auto_enter_days INTEGER,
           FOREIGN KEY (account_id) REFERENCES accounts(id),
           FOREIGN KEY (category_id) REFERENCES categories(id)
         )
       `);
       await db.execute(`
-        INSERT INTO scheduled_transactions_nullable_cat (id, account_id, category_id, amount, frequency, next_date, payee, type, to_account_id)
-        SELECT id, account_id, category_id, amount, frequency, next_date, payee, type, to_account_id FROM scheduled_transactions
+        INSERT INTO scheduled_transactions_nullable_cat (id, account_id, category_id, amount, frequency, next_date, payee, type, to_account_id, is_closed_ended, remaining_count, end_date, auto_enter_days)
+        SELECT id, account_id, category_id, amount, frequency, next_date, payee, type, to_account_id, COALESCE(is_closed_ended, 0), remaining_count, end_date, auto_enter_days FROM scheduled_transactions
       `);
       await db.execute('DROP TABLE scheduled_transactions');
       await db.execute('ALTER TABLE scheduled_transactions_nullable_cat RENAME TO scheduled_transactions');

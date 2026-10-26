@@ -87,6 +87,10 @@ export type ScheduledTransaction = {
   account_name?: string;
   category_name?: string;
   to_account_name?: string;
+  is_closed_ended?: boolean | number;
+  remaining_count?: number | null;
+  end_date?: string | null;
+  auto_enter_days?: number | null;
   is_instance_overridden?: boolean;
   effective_amount?: number;
   effective_payee?: string;

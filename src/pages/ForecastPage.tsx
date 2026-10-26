@@ -244,7 +244,9 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
           }
         } else {
           let safety = 0;
-          while (curDateStr <= endDateStr && safety < 1000) {
+          let remaining = bill.is_closed_ended && bill.remaining_count != null ? bill.remaining_count : Infinity;
+          while (curDateStr <= endDateStr && safety < 1000 && remaining > 0) {
+            if (bill.is_closed_ended && bill.end_date && curDateStr > bill.end_date) break;
             safety++;
             const ov = overrideMap.get(`${bill.id}_${curDateStr}`);
             const effectiveDate = ov?.new_date && ov.new_date.trim() ? ov.new_date.trim() : curDateStr;
@@ -268,6 +270,9 @@ const ForecastPage = ({ proStatus = false, onTriggerUpgrade }: ForecastPageProps
                 isOverridden: !!ov,
                 isDateChanged,
               });
+            }
+            if (bill.is_closed_ended && remaining !== Infinity) {
+              remaining--;
             }
             const nextD = advanceDateStr(curDateStr, bill.frequency || 'monthly');
             if (!nextD || nextD === curDateStr || nextD.includes('NaN')) break;

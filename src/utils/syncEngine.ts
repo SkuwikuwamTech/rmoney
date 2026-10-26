@@ -365,7 +365,7 @@ export async function mergeSyncBundle(remotePayload: SyncPayload): Promise<Merge
           );
           if (!match) {
             await db.execute(
-              'INSERT INTO scheduled_transactions (account_id, category_id, amount, frequency, next_date, payee, type, to_account_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+              'INSERT INTO scheduled_transactions (account_id, category_id, amount, frequency, next_date, payee, type, to_account_id, is_closed_ended, remaining_count, end_date, auto_enter_days) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
               [
                 mappedAccId,
                 mappedCatId,
@@ -375,6 +375,10 @@ export async function mergeSyncBundle(remotePayload: SyncPayload): Promise<Merge
                 remSt.payee || 'Scheduled',
                 remSt.type || 'expense',
                 mappedToAccId,
+                remSt.is_closed_ended ? 1 : 0,
+                remSt.remaining_count ?? null,
+                remSt.end_date || null,
+                remSt.auto_enter_days ?? null,
               ]
             );
           }
