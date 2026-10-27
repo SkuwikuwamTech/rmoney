@@ -60,6 +60,41 @@ Submit at `https://alternativeto.net/software/add/`:
 
 ---
 
+## Step 3b: Directory Submissions (SaaSHub, Selfh.st, OpenAlternative)
+
+### 1. SaaSHub Submission
+- **Direct Pre-filled Submission Link:** [https://www.saashub.com/services/new?url=https%3A%2F%2Fskuwikuwamtech.com%2Frmoney.html](https://www.saashub.com/services/new?url=https%3A%2F%2Fskuwikuwamtech.com%2Frmoney.html)
+- **Product Name:** `rMoney` (keep it clean per their rule: avoid "by Skuwikuwam" or slogans in the name field)
+- **Tagline (250 chars max):**
+  > Stop paying $109/yr to budget your own money. Run your ledger 100% locally with SQLite, simulate 365 days of cash flow, and crush debt. Free Edition or $29 lifetime.
+- **Categories:** `Personal Finance`, `Budgeting`, `Finance Tools`
+- **Competitors (select 3+):** `YNAB`, `Quicken`, `Monarch Money`, `Actual Budget`
+- **Product URL:** `https://skuwikuwamtech.com/rmoney.html`
+- **GitHub URL:** `https://github.com/SkuwikuwamTech/rmoney`
+- **Contact Email:** Your email address (for confirmation and ownership claim)
+
+### 2. Selfh.st Apps Directory Submission
+- **Submission Link:** [https://selfh.st/submit/](https://selfh.st/submit/)
+- **Publication Selection:** Select **`selfh.st/apps (Directory)`**
+- **Category:** Select **`Suggest an App`** ("Recommend an app for the directory")
+- **Project Name:** `rMoney`
+- **Link:** `https://github.com/SkuwikuwamTech/rmoney`
+- **Description:**
+  > Offline-first personal finance desktop & mobile app with 365-day cash flow simulation, SQLite ledger, receipt attachments, Debt Snowball/Avalanche amortization, and encrypted local Wi-Fi sync. Free Forever tier + $29 one-time lifetime Pro license.
+- **AI Question:** "Does the project leverage AI to assist with development?" -> Select **`Yes`**
+
+### 3. OpenAlternative Submission
+- **Submission Link:** [https://openalternative.co/submit](https://openalternative.co/submit)
+- **Authentication:** Click **Continue with GitHub**
+- **GitHub Repository URL:** `https://github.com/SkuwikuwamTech/rmoney`
+- **Website URL:** `https://skuwikuwamtech.com/rmoney.html`
+- **Product Name:** `rMoney`
+- **Category:** `Personal Finance` / `Budgeting`
+- **Replaces / Alternative to:** `YNAB`, `Quicken`, `Monarch Money`
+- **License Model:** `Freemium`
+
+---
+
 ## Step 4: Hacker News (`Show HN`) Launch Copy
 
 Submit at `https://news.ycombinator.com/submit` (Best time: **Tuesday or Wednesday at 8:30 AM EST**):
