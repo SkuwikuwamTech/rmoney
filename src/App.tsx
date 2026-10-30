@@ -37,6 +37,7 @@ import OnboardingModal from './components/OnboardingModal';
 import UpdateModal from './components/UpdateModal';
 import AccountDetailModal from './components/AccountDetailModal';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
+import { SidebarCalculator } from './components/SidebarCalculator';
 import TransactionsPage from './pages/TransactionsPage';
 import BudgetPage from './pages/BudgetPage';
 import BillsPage from './pages/BillsPage';
@@ -557,50 +558,59 @@ const App = () => {
           </div>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1.5">
-          <NavItem
-            active={activePage === 'dashboard'}
-            onClick={() => setActivePage('dashboard')}
-            icon={<LayoutDashboard size={20} />}
-            label="Dashboard"
-          />
-          <NavItem
-            active={activePage === 'accounts'}
-            onClick={() => setActivePage('accounts')}
-            icon={<Wallet size={20} />}
-            label="Accounts"
-          />
-          <NavItem
-            active={activePage === 'transactions'}
-            onClick={() => setActivePage('transactions')}
-            icon={<Receipt size={20} />}
-            label="Transactions"
-          />
-          <NavItem
-            active={activePage === 'budget'}
-            onClick={() => setActivePage('budget')}
-            icon={<Target size={20} />}
-            label="Budget"
-          />
-          <NavItem
-            active={activePage === 'bills'}
-            onClick={() => setActivePage('bills')}
-            icon={<Calendar size={20} />}
-            label="Bills"
-          />
-          <NavItem
-            active={activePage === 'forecast'}
-            onClick={() => setActivePage('forecast')}
-            icon={<BarChart3 size={20} />}
-            label="Forecast"
-          />
-          <NavItem
-            active={activePage === 'reports'}
-            onClick={() => setActivePage('reports')}
-            icon={<ReportsIcon size={20} />}
-            label="Reports"
-          />
-        </nav>
+        <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
+          <nav className="px-4 space-y-1.5 shrink-0">
+            <NavItem
+              active={activePage === 'dashboard'}
+              onClick={() => setActivePage('dashboard')}
+              icon={<LayoutDashboard size={20} />}
+              label="Dashboard"
+            />
+            <NavItem
+              active={activePage === 'accounts'}
+              onClick={() => setActivePage('accounts')}
+              icon={<Wallet size={20} />}
+              label="Accounts"
+            />
+            <NavItem
+              active={activePage === 'transactions'}
+              onClick={() => setActivePage('transactions')}
+              icon={<Receipt size={20} />}
+              label="Transactions"
+            />
+            <NavItem
+              active={activePage === 'budget'}
+              onClick={() => setActivePage('budget')}
+              icon={<Target size={20} />}
+              label="Budget"
+            />
+            <NavItem
+              active={activePage === 'bills'}
+              onClick={() => setActivePage('bills')}
+              icon={<Calendar size={20} />}
+              label="Bills"
+            />
+            <NavItem
+              active={activePage === 'forecast'}
+              onClick={() => setActivePage('forecast')}
+              icon={<BarChart3 size={20} />}
+              label="Forecast"
+            />
+            <NavItem
+              active={activePage === 'reports'}
+              onClick={() => setActivePage('reports')}
+              icon={<ReportsIcon size={20} />}
+              label="Reports"
+            />
+          </nav>
+
+          <div className="flex-1" />
+
+          {/* Embedded Sidebar Calculator */}
+          <div className="shrink-0">
+            <SidebarCalculator />
+          </div>
+        </div>
 
         <div className="p-3 border-t border-slate-800 space-y-1.5">
           {/* Privacy Mode Quick Toggle */}
