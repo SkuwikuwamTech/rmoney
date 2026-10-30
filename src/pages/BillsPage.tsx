@@ -256,6 +256,14 @@ const BillsPage = () => {
         };
       });
 
+      // Sort bills based on the edited date, not the original date
+      billsWithOverrides.sort((a, b) => {
+        const dateA = a.effective_date || a.next_date;
+        const dateB = b.effective_date || b.next_date;
+        if (dateA !== dateB) return dateA.localeCompare(dateB);
+        return (a.payee || '').localeCompare(b.payee || '');
+      });
+
       const accountsResult = (await db.select('SELECT * FROM accounts ORDER BY name ASC')) as Account[];
       const categoriesResult = (await db.select('SELECT * FROM categories ORDER BY name ASC')) as Category[];
 
@@ -264,7 +272,8 @@ const BillsPage = () => {
       let autoEnteredCount = 0;
       for (const bill of billsWithOverrides) {
         if (bill.auto_enter_days != null && bill.auto_enter_days >= 0) {
-          const parts = bill.next_date.split('-').map(Number);
+          const effectiveDate = bill.effective_date || bill.next_date;
+          const parts = effectiveDate.split('-').map(Number);
           const dt = new Date(parts[0], parts[1] - 1, parts[2]);
           dt.setDate(dt.getDate() - bill.auto_enter_days);
           const y = dt.getFullYear();
@@ -508,9 +517,14 @@ const BillsPage = () => {
   };
 
   const openPostModal = (bill: ScheduledTransaction) => {
+    const today = getLocalTodayStr(0);
+    const dueDate = bill.effective_date || bill.next_date;
+    // When paying a bill early (due date is in the future), reflect the current day, not the due date
+    const initialDate = dueDate > today ? today : dueDate;
+
     setPostingBill({
       bill,
-      date: bill.effective_date || bill.next_date,
+      date: initialDate,
       amount: String(bill.effective_amount ?? bill.amount),
       payee: bill.effective_payee || bill.payee || '',
       accountId: bill.account_id,
@@ -1352,7 +1366,14 @@ const BillsPage = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">Payment Date</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-500 uppercase">Payment Date</label>
+                    {(postingBill.bill.effective_date || postingBill.bill.next_date) > postingBill.date && (
+                      <span className="text-[11px] text-blue-600 font-medium">
+                        Due: {formatDate(postingBill.bill.effective_date || postingBill.bill.next_date)}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="date"
                     className="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
