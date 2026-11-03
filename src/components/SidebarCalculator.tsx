@@ -215,61 +215,76 @@ export const SidebarCalculator: React.FC = () => {
           {/* LCD Display */}
           <div
             onClick={handleCopy}
-            className="relative px-3 py-2 bg-[#0d233a] text-white rounded-lg border-2 border-[#1e4976] shadow-inner cursor-pointer hover:brightness-110 transition-all text-right group"
+            className="relative px-3 py-2 rounded-lg shadow-inner cursor-pointer hover:brightness-110 transition-all text-right group"
+            style={{ backgroundColor: '#0d233a', color: '#ffffff', borderColor: '#1e4976', borderWidth: '2px', borderStyle: 'solid' }}
             title="Click to copy value"
           >
             {/* Calculation history indicator */}
-            <div className="text-xs font-mono text-sky-300 font-semibold h-4 leading-4 truncate overflow-hidden">
+            <div
+              className="text-xs font-mono font-semibold h-4 leading-4 truncate overflow-hidden"
+              style={{ color: '#7dd3fc' }}
+            >
               {prevValue !== null && operation ? `${prevValue} ${operation}` : memory !== 0 ? `M = ${memory}` : ''}
             </div>
 
             {/* Main number display */}
-            <div className="text-2xl font-black font-mono tracking-wide leading-tight truncate text-white drop-shadow-xs">
+            <div
+              className="text-2xl font-black font-mono tracking-wide leading-tight truncate drop-shadow-xs"
+              style={{ color: '#ffffff' }}
+            >
               {formatDisplay(display)}
             </div>
 
             {copied && (
-              <span className="absolute left-2.5 bottom-2 text-[10px] font-sans font-bold bg-emerald-500 text-white px-2 py-0.5 rounded shadow">
+              <span
+                className="absolute left-2.5 bottom-2 text-[10px] font-sans font-bold px-2 py-0.5 rounded shadow"
+                style={{ backgroundColor: '#10b981', color: '#ffffff' }}
+              >
                 Copied
               </span>
             )}
           </div>
 
-          {/* 5x5 Keypad matching the user's mockup with large, high-contrast, easily readable numbers */}
+          {/* 5x5 Keypad with guaranteed explicit colors & high contrast */}
           <div className="grid grid-cols-5 gap-1.5 text-xs font-bold">
             {/* Row 1: 7, 8, 9, +, Back */}
             <button
               type="button"
               onClick={() => handleDigit('7')}
-              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-base shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#1e293b', color: '#ffffff', borderColor: '#334155', borderWidth: '1px', borderStyle: 'solid' }}
             >
               7
             </button>
             <button
               type="button"
               onClick={() => handleDigit('8')}
-              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-base shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#1e293b', color: '#ffffff', borderColor: '#334155', borderWidth: '1px', borderStyle: 'solid' }}
             >
               8
             </button>
             <button
               type="button"
               onClick={() => handleDigit('9')}
-              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-base shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#1e293b', color: '#ffffff', borderColor: '#334155', borderWidth: '1px', borderStyle: 'solid' }}
             >
               9
             </button>
             <button
               type="button"
               onClick={() => handleOperator('+')}
-              className="h-9 flex items-center justify-center rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-950 font-black text-lg border border-sky-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-lg shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#bae6fd', color: '#082f49', borderColor: '#7dd3fc', borderWidth: '1px', borderStyle: 'solid' }}
             >
               +
             </button>
             <button
               type="button"
               onClick={handleBackspace}
-              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[11px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-xs shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#334155', color: '#ffffff', borderColor: '#475569', borderWidth: '1px', borderStyle: 'solid' }}
               title="Backspace"
             >
               Back
@@ -279,35 +294,40 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={() => handleDigit('4')}
-              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-base shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#1e293b', color: '#ffffff', borderColor: '#334155', borderWidth: '1px', borderStyle: 'solid' }}
             >
               4
             </button>
             <button
               type="button"
               onClick={() => handleDigit('5')}
-              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-base shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#1e293b', color: '#ffffff', borderColor: '#334155', borderWidth: '1px', borderStyle: 'solid' }}
             >
               5
             </button>
             <button
               type="button"
               onClick={() => handleDigit('6')}
-              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-base shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#1e293b', color: '#ffffff', borderColor: '#334155', borderWidth: '1px', borderStyle: 'solid' }}
             >
               6
             </button>
             <button
               type="button"
               onClick={() => handleOperator('-')}
-              className="h-9 flex items-center justify-center rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-950 font-black text-lg border border-sky-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-lg shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#bae6fd', color: '#082f49', borderColor: '#7dd3fc', borderWidth: '1px', borderStyle: 'solid' }}
             >
               −
             </button>
             <button
               type="button"
               onClick={handleAns}
-              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[11px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-xs shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#334155', color: '#ffffff', borderColor: '#475569', borderWidth: '1px', borderStyle: 'solid' }}
               title="Last Answer"
             >
               Ans
@@ -317,35 +337,40 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={() => handleDigit('1')}
-              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-base shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#1e293b', color: '#ffffff', borderColor: '#334155', borderWidth: '1px', borderStyle: 'solid' }}
             >
               1
             </button>
             <button
               type="button"
               onClick={() => handleDigit('2')}
-              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-base shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#1e293b', color: '#ffffff', borderColor: '#334155', borderWidth: '1px', borderStyle: 'solid' }}
             >
               2
             </button>
             <button
               type="button"
               onClick={() => handleDigit('3')}
-              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-base shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#1e293b', color: '#ffffff', borderColor: '#334155', borderWidth: '1px', borderStyle: 'solid' }}
             >
               3
             </button>
             <button
               type="button"
               onClick={() => handleOperator('×')}
-              className="h-9 flex items-center justify-center rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-950 font-black text-lg border border-sky-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-lg shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#bae6fd', color: '#082f49', borderColor: '#7dd3fc', borderWidth: '1px', borderStyle: 'solid' }}
             >
               ×
             </button>
             <button
               type="button"
               onClick={handleMemoryAdd}
-              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[11px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-xs shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#334155', color: '#ffffff', borderColor: '#475569', borderWidth: '1px', borderStyle: 'solid' }}
               title="Memory Add"
             >
               M+
@@ -355,21 +380,24 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={() => handleDigit('0')}
-              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-base shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#1e293b', color: '#ffffff', borderColor: '#334155', borderWidth: '1px', borderStyle: 'solid' }}
             >
               0
             </button>
             <button
               type="button"
               onClick={handleDecimal}
-              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-base shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#1e293b', color: '#ffffff', borderColor: '#334155', borderWidth: '1px', borderStyle: 'solid' }}
             >
               .
             </button>
             <button
               type="button"
               onClick={handleExp}
-              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[10px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer font-mono"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-[11px] shadow-2xs active:scale-95 transition-all cursor-pointer font-mono"
+              style={{ backgroundColor: '#334155', color: '#ffffff', borderColor: '#475569', borderWidth: '1px', borderStyle: 'solid' }}
               title="Scientific Exponent (e)"
             >
               EXP
@@ -377,14 +405,16 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={() => handleOperator('÷')}
-              className="h-9 flex items-center justify-center rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-950 font-black text-lg border border-sky-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-lg shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#bae6fd', color: '#082f49', borderColor: '#7dd3fc', borderWidth: '1px', borderStyle: 'solid' }}
             >
               ÷
             </button>
             <button
               type="button"
               onClick={handleMemorySubtract}
-              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[11px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-xs shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#334155', color: '#ffffff', borderColor: '#475569', borderWidth: '1px', borderStyle: 'solid' }}
               title="Memory Subtract"
             >
               M−
@@ -394,7 +424,8 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={handleToggleSign}
-              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-sm border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-sm shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#334155', color: '#ffffff', borderColor: '#475569', borderWidth: '1px', borderStyle: 'solid' }}
               title="Negate Sign"
             >
               ±
@@ -402,7 +433,8 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={handleRound}
-              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[10px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-[11px] shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#334155', color: '#ffffff', borderColor: '#475569', borderWidth: '1px', borderStyle: 'solid' }}
               title="Round to 2 decimals / Random"
             >
               RND
@@ -410,7 +442,8 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={handleAllClear}
-              className="h-9 flex items-center justify-center rounded-lg bg-rose-200 hover:bg-rose-300 text-rose-950 font-black text-xs border border-rose-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-xs shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#fecdd3', color: '#881337', borderColor: '#fda4af', borderWidth: '1px', borderStyle: 'solid' }}
               title="All Clear"
             >
               AC
@@ -418,7 +451,8 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={handleEquals}
-              className="h-9 flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-black text-xl border border-blue-700 shadow-xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-xl shadow-xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#2563eb', color: '#ffffff', borderColor: '#1d4ed8', borderWidth: '1px', borderStyle: 'solid' }}
               title="Calculate"
             >
               =
@@ -426,7 +460,8 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={handleMemoryRecall}
-              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[11px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+              className="h-9 flex items-center justify-center rounded-lg font-black text-xs shadow-2xs active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: '#334155', color: '#ffffff', borderColor: '#475569', borderWidth: '1px', borderStyle: 'solid' }}
               title="Memory Recall"
             >
               MR
