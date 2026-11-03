@@ -211,65 +211,65 @@ export const SidebarCalculator: React.FC = () => {
       </div>
 
       {!isCollapsed && (
-        <div className="p-2 space-y-1.5">
+        <div className="p-2 space-y-2">
           {/* LCD Display */}
           <div
             onClick={handleCopy}
-            className="relative px-2.5 py-1.5 bg-[#255f8e] text-white rounded-md border border-[#1e4e75] shadow-inner cursor-pointer hover:brightness-105 transition-all text-right group"
+            className="relative px-3 py-2 bg-[#0d233a] text-white rounded-lg border-2 border-[#1e4976] shadow-inner cursor-pointer hover:brightness-110 transition-all text-right group"
             title="Click to copy value"
           >
-            {/* Small calculation history indicator */}
-            <div className="text-[9px] font-mono text-blue-200/80 h-3 leading-3 truncate overflow-hidden">
+            {/* Calculation history indicator */}
+            <div className="text-xs font-mono text-sky-300 font-semibold h-4 leading-4 truncate overflow-hidden">
               {prevValue !== null && operation ? `${prevValue} ${operation}` : memory !== 0 ? `M = ${memory}` : ''}
             </div>
 
             {/* Main number display */}
-            <div className="text-lg font-bold font-mono tracking-tight leading-none truncate">
+            <div className="text-2xl font-black font-mono tracking-wide leading-tight truncate text-white drop-shadow-xs">
               {formatDisplay(display)}
             </div>
 
             {copied && (
-              <span className="absolute left-2 bottom-1.5 text-[9px] font-sans font-bold bg-emerald-500 text-white px-1.5 py-0.5 rounded shadow-sm">
+              <span className="absolute left-2.5 bottom-2 text-[10px] font-sans font-bold bg-emerald-500 text-white px-2 py-0.5 rounded shadow">
                 Copied
               </span>
             )}
           </div>
 
-          {/* 5x5 Keypad matching the user's mockup */}
-          <div className="grid grid-cols-5 gap-1 text-xs font-bold">
+          {/* 5x5 Keypad matching the user's mockup with large, high-contrast, easily readable numbers */}
+          <div className="grid grid-cols-5 gap-1.5 text-xs font-bold">
             {/* Row 1: 7, 8, 9, +, Back */}
             <button
               type="button"
               onClick={() => handleDigit('7')}
-              className="py-1.5 rounded bg-slate-300 hover:bg-white text-slate-900 border border-slate-400/60 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               7
             </button>
             <button
               type="button"
               onClick={() => handleDigit('8')}
-              className="py-1.5 rounded bg-slate-300 hover:bg-white text-slate-900 border border-slate-400/60 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               8
             </button>
             <button
               type="button"
               onClick={() => handleDigit('9')}
-              className="py-1.5 rounded bg-slate-300 hover:bg-white text-slate-900 border border-slate-400/60 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               9
             </button>
             <button
               type="button"
               onClick={() => handleOperator('+')}
-              className="py-1.5 rounded bg-sky-200 hover:bg-sky-100 text-sky-950 border border-sky-300/80 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-950 font-black text-lg border border-sky-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               +
             </button>
             <button
               type="button"
               onClick={handleBackspace}
-              className="py-1.5 rounded bg-slate-200 hover:bg-slate-100 text-slate-800 border border-slate-300 text-[10px] active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[11px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
               title="Backspace"
             >
               Back
@@ -279,35 +279,35 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={() => handleDigit('4')}
-              className="py-1.5 rounded bg-slate-300 hover:bg-white text-slate-900 border border-slate-400/60 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               4
             </button>
             <button
               type="button"
               onClick={() => handleDigit('5')}
-              className="py-1.5 rounded bg-slate-300 hover:bg-white text-slate-900 border border-slate-400/60 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               5
             </button>
             <button
               type="button"
               onClick={() => handleDigit('6')}
-              className="py-1.5 rounded bg-slate-300 hover:bg-white text-slate-900 border border-slate-400/60 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               6
             </button>
             <button
               type="button"
               onClick={() => handleOperator('-')}
-              className="py-1.5 rounded bg-sky-200 hover:bg-sky-100 text-sky-950 border border-sky-300/80 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-950 font-black text-lg border border-sky-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               −
             </button>
             <button
               type="button"
               onClick={handleAns}
-              className="py-1.5 rounded bg-slate-200 hover:bg-slate-100 text-slate-800 border border-slate-300 text-[10px] active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[11px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
               title="Last Answer"
             >
               Ans
@@ -317,35 +317,35 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={() => handleDigit('1')}
-              className="py-1.5 rounded bg-slate-300 hover:bg-white text-slate-900 border border-slate-400/60 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               1
             </button>
             <button
               type="button"
               onClick={() => handleDigit('2')}
-              className="py-1.5 rounded bg-slate-300 hover:bg-white text-slate-900 border border-slate-400/60 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               2
             </button>
             <button
               type="button"
               onClick={() => handleDigit('3')}
-              className="py-1.5 rounded bg-slate-300 hover:bg-white text-slate-900 border border-slate-400/60 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               3
             </button>
             <button
               type="button"
               onClick={() => handleOperator('×')}
-              className="py-1.5 rounded bg-sky-200 hover:bg-sky-100 text-sky-950 border border-sky-300/80 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-950 font-black text-lg border border-sky-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               ×
             </button>
             <button
               type="button"
               onClick={handleMemoryAdd}
-              className="py-1.5 rounded bg-slate-200 hover:bg-slate-100 text-slate-800 border border-slate-300 text-[10px] active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[11px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
               title="Memory Add"
             >
               M+
@@ -355,21 +355,21 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={() => handleDigit('0')}
-              className="py-1.5 rounded bg-slate-300 hover:bg-white text-slate-900 border border-slate-400/60 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               0
             </button>
             <button
               type="button"
               onClick={handleDecimal}
-              className="py-1.5 rounded bg-slate-300 hover:bg-white text-slate-900 border border-slate-400/60 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-base border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               .
             </button>
             <button
               type="button"
               onClick={handleExp}
-              className="py-1.5 rounded bg-slate-200 hover:bg-slate-100 text-slate-800 border border-slate-300 text-[9px] active:scale-95 transition-all font-mono"
+              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[10px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer font-mono"
               title="Scientific Exponent (e)"
             >
               EXP
@@ -377,14 +377,14 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={() => handleOperator('÷')}
-              className="py-1.5 rounded bg-sky-200 hover:bg-sky-100 text-sky-950 border border-sky-300/80 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-950 font-black text-lg border border-sky-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
             >
               ÷
             </button>
             <button
               type="button"
               onClick={handleMemorySubtract}
-              className="py-1.5 rounded bg-slate-200 hover:bg-slate-100 text-slate-800 border border-slate-300 text-[10px] active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[11px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
               title="Memory Subtract"
             >
               M−
@@ -394,7 +394,7 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={handleToggleSign}
-              className="py-1.5 rounded bg-slate-200 hover:bg-slate-100 text-slate-800 border border-slate-300 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-sm border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
               title="Negate Sign"
             >
               ±
@@ -402,7 +402,7 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={handleRound}
-              className="py-1.5 rounded bg-slate-200 hover:bg-slate-100 text-slate-800 border border-slate-300 text-[9px] active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[10px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
               title="Round to 2 decimals / Random"
             >
               RND
@@ -410,7 +410,7 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={handleAllClear}
-              className="py-1.5 rounded bg-blue-300 hover:bg-blue-200 text-blue-950 border border-blue-400/80 active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-rose-200 hover:bg-rose-300 text-rose-950 font-black text-xs border border-rose-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
               title="All Clear"
             >
               AC
@@ -418,7 +418,7 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={handleEquals}
-              className="py-1.5 rounded bg-blue-500 hover:bg-blue-400 text-white border border-blue-600 active:scale-95 transition-all shadow-2xs font-extrabold"
+              className="h-9 flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-black text-xl border border-blue-700 shadow-xs active:scale-95 transition-all cursor-pointer"
               title="Calculate"
             >
               =
@@ -426,7 +426,7 @@ export const SidebarCalculator: React.FC = () => {
             <button
               type="button"
               onClick={handleMemoryRecall}
-              className="py-1.5 rounded bg-slate-200 hover:bg-slate-100 text-slate-800 border border-slate-300 text-[10px] active:scale-95 transition-all"
+              className="h-9 flex items-center justify-center rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-[11px] border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
               title="Memory Recall"
             >
               MR
